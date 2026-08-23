@@ -1,0 +1,25 @@
+# The path most strangers take: a bare install, the handle typed into the GitHub row,
+# save, the first refresh, the dashboard. Rendered by smoke-install.sh, which fills in
+# the handle, the image and the output path.
+Output "{{OUTPUT}}"
+Set Shell "bash"
+Set Width 1400
+Set Height 800
+Set TypingSpeed 40ms
+Set WaitTimeout 180s
+
+Type "docker run --rm -it {{IMAGE}} qplex"
+Enter
+Wait+Screen /Save and refresh/
+Sleep 2s
+Enter
+Type "{{HANDLE}}"
+Enter
+Wait+Screen /GitHub.*repos?/
+Sleep 1s
+Type "jjjjj"
+Enter
+Wait+Screen /GITHUB/
+Sleep 2s
+Type "q"
+Sleep 1s

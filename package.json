@@ -1,0 +1,62 @@
+{
+  "name": "quadraplex",
+  "version": "0.1.0",
+  "description": "Portfolio monitor for the packages and repos you publish, with history and deltas.",
+  "keywords": [
+    "cli",
+    "dashboard",
+    "developer-tools",
+    "github",
+    "npm",
+    "portfolio",
+    "pypi",
+    "tui"
+  ],
+  "license": "MIT",
+  "author": "shbernal",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shbernal/quadraplex"
+  },
+  "bin": {
+    "qplex": "dist/cli.js",
+    "quadraplex": "dist/cli.js"
+  },
+  "files": [
+    "dist/cli.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/bin.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --type-aware",
+    "knip": "knip",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "prose": "charcheck README.md CONTRIBUTING.md",
+    "build": "bun run scripts/build.ts",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "ink": "^7.1.1",
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "@types/react": "^19.3.0",
+    "charcheck": "^0.4.0",
+    "knip": "^6.39.0",
+    "lefthook": "^2.1.16",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "oxlint-tsgolint": "^7.0.2003",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "bun@1.4.2"
+}

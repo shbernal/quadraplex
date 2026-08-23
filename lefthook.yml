@@ -1,0 +1,20 @@
+remotes:
+  - git_url: https://github.com/shbernal/lefthook-rules
+    configs:
+      - rules/no-ai-attribution.yml
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      glob: '*.{ts,tsx,js,json}'
+      run: bun run oxfmt --check {staged_files}
+    - name: lint
+      glob: '*.{ts,tsx}'
+      run: bun run oxlint --type-aware {staged_files}
+    - name: typecheck
+      glob: '*.{ts,tsx}'
+      run: bun run typecheck
+    - name: prose
+      glob: '{README.md,CONTRIBUTING.md}'
+      run: bun run charcheck {staged_files}

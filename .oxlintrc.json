@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "react", "import", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn",
+    "pedantic": "off"
+  },
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["dist", "node_modules", ".claude/worktrees"],
+  "rules": {
+    "no-console": "off",
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-unsafe-type-assertion": "off",
+    "no-await-in-loop": "off",
+    "react/react-in-jsx-scope": "off"
+  }
+}
