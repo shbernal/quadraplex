@@ -35,7 +35,7 @@ qplex             # open the dashboard
 `refresh` discovers your npm packages and public GitHub repos from your account name.
 PyPI has no public per-user listing, so those packages are named in the config file.
 
-Config lives at `~/.config/quadraplex/config.json` and every key is optional:
+Config lives at `~/.local/share/quadraplex/config.json` and every key is optional:
 
 ```jsonc
 {

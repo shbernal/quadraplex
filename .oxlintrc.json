@@ -7,10 +7,14 @@
     "perf": "warn",
     "pedantic": "off"
   },
-  "env": { "node": true, "es2024": true },
+  "env": {
+    "node": true,
+    "es2024": true
+  },
   "ignorePatterns": ["dist", "node_modules"],
   "rules": {
     "no-console": "off",
-    "typescript/consistent-type-imports": "error"
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-unsafe-type-assertion": "off"
   }
 }
