@@ -2,9 +2,9 @@ import { spawn } from 'node:child_process'
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Text, useApp, useInput, useStdout } from 'ink'
 import { compactNumber, formatDelta, relativeAge, since } from '../core/format.ts'
-import { buildProjects, type Project } from './model.ts'
+import { buildProjects, projectItems, type Project } from './model.ts'
 import { Sparkline } from './sparkline.tsx'
-import { Detail } from './detail.tsx'
+import { Detail, Item } from './detail.tsx'
 import { MARKERS, theme } from './theme.ts'
 
 /** Columns drop by priority as the terminal narrows. Deltas are the last thing to go. */
@@ -115,13 +115,17 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
 
   const [projects, setProjects] = useState<Project[]>(() => buildProjects())
   const [cursor, setCursor] = useState(0)
-  const [detail, setDetail] = useState(false)
+  const [view, setView] = useState<'list' | 'detail' | 'item'>('list')
+  const [itemCursor, setItemCursor] = useState(0)
+  const [scroll, setScroll] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
 
   // Clamped during render rather than corrected in an effect, so a refresh that shortens
   // the list never draws a frame with the cursor past the end.
   const index = Math.max(0, Math.min(cursor, projects.length - 1))
   const selected = projects[index]
+  const items = useMemo(() => (selected ? projectItems(selected) : []), [selected])
+  const item = items[Math.min(itemCursor, Math.max(items.length - 1, 0))]
 
   const reload = useCallback(() => {
     setProjects(buildProjects())
@@ -146,15 +150,41 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
 
   useInput((input, key) => {
     if (input === 'q' || key.escape) {
-      if (detail) return setDetail(false)
+      if (view === 'item') return setView('detail')
+      if (view === 'detail') return setView('list')
       return exit()
     }
     if (busy) return
-    if (input === 'j' || key.downArrow) setCursor(Math.min(index + 1, projects.length - 1))
-    if (input === 'k' || key.upArrow) setCursor(Math.max(index - 1, 0))
+
+    const down = input === 'j' || key.downArrow
+    const up = input === 'k' || key.upArrow
+
+    if (view === 'item') {
+      if (down) setScroll((s) => s + 1)
+      if (up) setScroll((s) => Math.max(s - 1, 0))
+      if (input === 'o' && item) open(item.url)
+      return
+    }
+
+    if (view === 'detail') {
+      if (down) setItemCursor((c) => Math.min(c + 1, Math.max(items.length - 1, 0)))
+      if (up) setItemCursor((c) => Math.max(c - 1, 0))
+      if (key.return && item) {
+        setScroll(0)
+        setView('item')
+      }
+      if (input === 'o' && selected) open(selected.targets[0]!.url)
+      return
+    }
+
+    if (down) setCursor(Math.min(index + 1, projects.length - 1))
+    if (up) setCursor(Math.max(index - 1, 0))
     if (input === 'g') setCursor(0)
     if (input === 'G') setCursor(projects.length - 1)
-    if (key.return) setDetail(true)
+    if (key.return) {
+      setItemCursor(0)
+      setView('detail')
+    }
     if (input === 'o' && selected) open(selected.targets[0]!.url)
     if (input === 'r') void runRefresh()
   })
@@ -174,7 +204,18 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     )
   }
 
-  if (detail && selected) return <Detail project={selected} width={width} />
+  if (view === 'item' && item) return <Item item={item} offset={scroll} width={width} rows={rows} />
+  if (view === 'detail' && selected) {
+    return (
+      <Detail
+        project={selected}
+        items={items}
+        cursor={Math.min(itemCursor, Math.max(items.length - 1, 0))}
+        width={width}
+        rows={rows}
+      />
+    )
+  }
 
   return (
     <Box flexDirection="column">

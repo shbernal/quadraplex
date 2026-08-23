@@ -17,7 +17,8 @@ export type Fetched = {
 export type Source = {
   ecosystem: Ecosystem
   discover(config: Config): Promise<Descriptor[]>
-  fetch(descriptor: Descriptor, config: Config): Promise<Fetched>
+  /** `previous` lets a source answer a 304 with the values it already had. */
+  fetch(descriptor: Descriptor, config: Config, previous?: Snapshot): Promise<Fetched>
 }
 
 /** Pulls "owner/repo" out of any GitHub URL shape a registry might carry. */

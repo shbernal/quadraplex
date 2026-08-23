@@ -1,6 +1,9 @@
 import { loadConfig } from '../core/config.ts'
-import { loadState, readSeries } from '../core/store.ts'
+import type { IssueDetail } from '../sources/github.ts'
+import { loadState, readDetail, readSeries } from '../core/store.ts'
 import { HEADLINE_METRIC, type SeriesPoint, type Target } from '../core/types.ts'
+
+export type Metric = { value: number; delta: number | null; baselineAt?: string }
 
 export type Project = {
   key: string
@@ -10,8 +13,8 @@ export type Project = {
   stale: boolean
   /** The npm or PyPI series that drives the row's sparkline, empty when there is none. */
   series: SeriesPoint[]
-  downloads: { value: number; delta: number | null; baselineAt?: string } | null
-  stars: { value: number; delta: number | null; baselineAt?: string } | null
+  downloads: Metric | null
+  stars: Metric | null
 }
 
 /**
@@ -49,16 +52,36 @@ function group(targets: Target[]): Target[][] {
   return [...groups.values()]
 }
 
-function metric(target: Target | undefined, key: string) {
-  if (!target) return null
-  const value = target.metrics[key]
-  if (typeof value !== 'number') return null
-  const out: { value: number; delta: number | null; baselineAt?: string } = {
+/**
+ * A monorepo publishes several packages from one repo, so a project's headline number is
+ * the sum across its registry targets. A delta is only meaningful when every contributing
+ * target has a baseline, otherwise the sum would silently drop the ones that do not.
+ */
+function metric(targets: Target[], key: string): Metric | null {
+  const relevant = targets.filter((t) => typeof t.metrics[key] === 'number')
+  if (relevant.length === 0) return null
+  const value = relevant.reduce((total, t) => total + (t.metrics[key] as number), 0)
+  const deltas = relevant.map((t) => (t.deltas ? (t.deltas[key] ?? null) : null))
+  const out: Metric = {
     value,
-    delta: target.deltas ? (target.deltas[key] ?? null) : null,
+    delta: deltas.includes(null) ? null : deltas.reduce((total, d) => total! + d!, 0),
   }
-  if (target.deltaBaselineAt) out.baselineAt = target.deltaBaselineAt
+  const baseline = relevant.find((t) => t.deltaBaselineAt)?.deltaBaselineAt
+  if (baseline) out.baselineAt = baseline
   return out
+}
+
+/** Element-wise sum by date, so a multi-package project gets one honest trace. */
+function mergeSeries(all: SeriesPoint[][]): SeriesPoint[] {
+  if (all.length <= 1) return all[0] ?? []
+  const totals = new Map<string, number>()
+  for (const series of all) {
+    for (const point of series)
+      totals.set(point.date, (totals.get(point.date) ?? 0) + point.downloads)
+  }
+  return [...totals.entries()]
+    .map(([date, downloads]) => ({ date, downloads }))
+    .toSorted((a, b) => a.date.localeCompare(b.date))
 }
 
 /**
@@ -78,8 +101,8 @@ export function buildProjects(): Project[] {
   const state = loadState(config)
   const projects = group(state.targets).map((targets): Project => {
     const ordered = targets.toSorted((a, b) => a.ecosystem.localeCompare(b.ecosystem))
-    const registry = ordered.find((t) => t.ecosystem === 'npm' || t.ecosystem === 'pypi')
-    const repo = ordered.find((t) => t.ecosystem === 'github')
+    const registries = ordered.filter((t) => t.ecosystem === 'npm' || t.ecosystem === 'pypi')
+    const repos = ordered.filter((t) => t.ecosystem === 'github')
     return {
       key: ordered.map((t) => t.id).join('+'),
       name: displayName(ordered, config.accounts.npm),
@@ -88,9 +111,9 @@ export function buildProjects(): Project[] {
         t.deltas ? Object.values(t.deltas).some((d) => d !== null && d !== 0) : false,
       ),
       stale: ordered.some((t) => t.stale),
-      series: registry ? readSeries(registry.id) : [],
-      downloads: metric(registry, HEADLINE_METRIC.npm),
-      stars: metric(repo, HEADLINE_METRIC.github),
+      series: mergeSeries(registries.map((t) => readSeries(t.id))),
+      downloads: metric(registries, HEADLINE_METRIC.npm),
+      stars: metric(repos, HEADLINE_METRIC.github),
     }
   })
 
@@ -104,6 +127,13 @@ function rank(project: Project): number {
   return project.downloads?.delta === null ? 1 : 2
 }
 
-export function browserUrl(target: Target): string {
-  return target.url
+/**
+ * Open issues and pull requests are written to disk by refresh, so the modal reads them
+ * from the store like everything else. The dashboard never fetches.
+ */
+export function projectItems(project: Project): IssueDetail[] {
+  return project.targets
+    .filter((target) => target.ecosystem === 'github')
+    .flatMap((target) => (readDetail(target.id) as { items?: IssueDetail[] } | null)?.items ?? [])
+    .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 }

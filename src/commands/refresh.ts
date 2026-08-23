@@ -6,6 +6,7 @@ import {
   groupById,
   readSnapshots,
   rebuildState,
+  writeDetail,
   writeSeries,
 } from '../core/store.ts'
 import {
@@ -78,12 +79,13 @@ export async function refresh(options: { only?: unknown } = {}): Promise<Refresh
     await mapLimit(descriptors, CONCURRENCY, async (descriptor) => {
       const id = targetId(ecosystem, descriptor.name)
       try {
-        const fetched = await source.fetch(descriptor, config)
+        const fetched = await source.fetch(descriptor, config, previous.get(id)?.at(-1))
         const snapshot = fetched.snapshot
         const overrides = config.links[snapshot.id]
         if (overrides) snapshot.links = overrides
         snapshots.push(snapshot)
         if (fetched.series?.length) writeSeries(snapshot.id, fetched.series)
+        if (fetched.detail) writeDetail(snapshot.id, fetched.detail)
         report.ok++
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)

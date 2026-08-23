@@ -147,6 +147,14 @@ export function writeSeries(id: string, points: SeriesPoint[]): void {
   writeJson(paths.series(id), points)
 }
 
+export function readDetail(id: string): unknown {
+  return readJson<unknown>(paths.detail(id), null)
+}
+
+export function writeDetail(id: string, detail: unknown): void {
+  writeJson(paths.detail(id), detail)
+}
+
 export function readCurve(id: string): Curve | null {
   return readJson<Curve | null>(paths.curve(id), null)
 }

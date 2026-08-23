@@ -35,6 +35,9 @@ export const paths = {
   series(id: string) {
     return join(dataDir(), 'series', `${slug(id)}.json`)
   },
+  detail(id: string) {
+    return join(dataDir(), 'detail', `${slug(id)}.json`)
+  },
 }
 
 export function slug(id: string): string {

@@ -26,6 +26,12 @@ export async function run(argv: string[]): Promise<number> {
 
   switch (command) {
     case 'refresh': {
+      if (flags.curves) {
+        const { curvesSummary, refreshCurves } = await import('./commands/curves.ts')
+        const curves = await refreshCurves()
+        print(json, curves, curvesSummary(curves))
+        return curves.failed.length > 0 && curves.built.length === 0 ? 1 : 0
+      }
       const report = await refresh({ only: flags.only })
       print(json, report, refreshSummary(report))
       return report.failed.length > 0 && report.ok === 0 ? 1 : 0
