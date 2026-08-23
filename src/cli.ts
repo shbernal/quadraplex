@@ -43,6 +43,12 @@ export async function run(argv: string[]): Promise<number> {
       return 0
     }
     case '': {
+      // A piped invocation must never enter raw mode, so it degrades to the status table.
+      if (!json && process.stdout.isTTY && process.stdin.isTTY) {
+        const { startDashboard } = await import('./tui/index.ts')
+        await startDashboard()
+        return 0
+      }
       const payload = statusPayload()
       print(json, payload, statusTable(payload))
       return 0

@@ -16,6 +16,7 @@
     "no-console": "off",
     "typescript/consistent-type-imports": "error",
     "typescript/no-unsafe-type-assertion": "off",
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "react/react-in-jsx-scope": "off"
   }
 }
