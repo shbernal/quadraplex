@@ -59,11 +59,20 @@ export type GetOptions = {
   attempts?: number
 }
 
-export async function getJson<T>(url: string, options: GetOptions = {}): Promise<Response<T>> {
+/**
+ * One request loop for every content type. Retries, conditional headers and the ETag
+ * bookkeeping are identical whether the body is JSON or a store page, and only the last
+ * step of turning a body into a value differs.
+ */
+async function send(
+  url: string,
+  options: GetOptions,
+  fallbackAccept: string,
+): Promise<{ status: number; body: globalThis.Response | null; headers: Headers }> {
   const attempts = options.attempts ?? 4
   const headers: Record<string, string> = {
     'user-agent': USER_AGENT,
-    accept: options.accept ?? 'application/json',
+    accept: options.accept ?? fallbackAccept,
   }
   if (options.token) headers.authorization = `Bearer ${options.token}`
 
@@ -90,7 +99,7 @@ export async function getJson<T>(url: string, options: GetOptions = {}): Promise
 
     if (response.status === 304) {
       trace(304, url, response.headers)
-      return { status: 304, notModified: true, data: null, headers: response.headers }
+      return { status: 304, body: null, headers: response.headers }
     }
     trace(response.status, url, response.headers)
 
@@ -111,15 +120,25 @@ export async function getJson<T>(url: string, options: GetOptions = {}): Promise
       }
     }
 
-    return {
-      status: response.status,
-      notModified: false,
-      data: (await response.json()) as T,
-      headers: response.headers,
-    }
+    return { status: response.status, body: response, headers: response.headers }
   }
 
   throw new Error(`request to ${url} failed`, { cause: lastError })
+}
+
+export async function getJson<T>(url: string, options: GetOptions = {}): Promise<Response<T>> {
+  const { status, body, headers } = await send(url, options, 'application/json')
+  return {
+    status,
+    notModified: body === null,
+    data: body ? ((await body.json()) as T) : null,
+    headers,
+  }
+}
+
+export async function getText(url: string, options: GetOptions = {}): Promise<Response<string>> {
+  const { status, body, headers } = await send(url, options, 'text/html')
+  return { status, notModified: body === null, data: body ? await body.text() : null, headers }
 }
 
 /** Runs tasks with a small concurrency cap so a portfolio refresh stays polite. */

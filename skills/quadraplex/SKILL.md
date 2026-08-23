@@ -1,12 +1,12 @@
 ---
 name: quadraplex
-description: Read portfolio state for the npm packages, PyPI packages, Firefox add-ons and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, add-on or repo is doing, or which of their projects moved recently.
+description: Read portfolio state for the npm packages, PyPI packages, browser extensions and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
 ---
 
 # quadraplex
 
 A local store of everything the user publishes: npm packages, PyPI packages, Firefox
-add-ons and GitHub repos, with per-day download history where a source serves one, and
+add-ons, Chrome extensions and GitHub repos, with per-day download history where a source serves one, and
 deltas measured against a time anchored baseline.
 
 The store is already on disk. Your job is to read it, not to rebuild it.
@@ -49,6 +49,7 @@ qplex npm charcheck --json
 qplex pypi mcp-server-rfc --json
 qplex gh shbernal/gitpulse --json
 qplex amo rebobinate --json
+qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 ```
 
 Add `--fresh` to refetch that one target when the answer has to be current:
@@ -80,6 +81,12 @@ missing. It has real values, they are just older than their TTL.
 **An add-on has no per-day series.** AMO serves download history only to the add-on's
 owner, so `amo:` targets carry `users`, the average daily user count, as a level rather
 than a flow. Its history is whatever the store has accumulated, exactly like stars.
+
+**A Chrome extension's `users` is a string, not a number.** The Chrome Web Store has no
+read API and publishes a rounded bucket, so a `cws:` target carries `users: "1,000"` and
+never a delta on it. Report it as approximate, say "about a thousand", and never subtract
+two of them. `null` there means the store showed no badge at all, which happens below a
+few dozen users. `rating` and `ratings` on the same target are exact and do move.
 
 Also worth knowing: `openIssuesAndPRs` is GitHub's combined count. When `openIssues` and
 `openPRs` are non-null the split was actually counted; when they are null, only the

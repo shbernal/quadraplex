@@ -1,0 +1,2 @@
+# Fixtures are captured bytes. Reformatting them changes what is under test.
+tests/fixtures/

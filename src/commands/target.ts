@@ -25,6 +25,7 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   gh: 'github',
   github: 'github',
   amo: 'amo',
+  cws: 'cws',
 }
 
 /**

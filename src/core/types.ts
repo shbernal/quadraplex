@@ -1,8 +1,8 @@
 export const SCHEMA_VERSION = 2
 
-export type Ecosystem = 'npm' | 'pypi' | 'github' | 'amo'
+export type Ecosystem = 'npm' | 'pypi' | 'github' | 'amo' | 'cws'
 
-export const ECOSYSTEMS: Ecosystem[] = ['npm', 'pypi', 'github', 'amo']
+export const ECOSYSTEMS: Ecosystem[] = ['npm', 'pypi', 'github', 'amo', 'cws']
 
 export type MetricValue = number | string | null
 
@@ -50,6 +50,7 @@ export const HEADLINE_METRIC: Record<Ecosystem, string> = {
   pypi: 'downloadsWeek',
   github: 'stars',
   amo: 'users',
+  cws: 'users',
 }
 
 export function targetId(ecosystem: Ecosystem, name: string): string {
@@ -63,6 +64,8 @@ export function parseTargetId(id: string): { ecosystem: Ecosystem; name: string 
   const name = id.slice(at + 1)
   if (!name) return null
   if (prefix === 'gh') return { ecosystem: 'github', name }
-  if (prefix === 'npm' || prefix === 'pypi' || prefix === 'amo') return { ecosystem: prefix, name }
+  if (prefix === 'npm' || prefix === 'pypi' || prefix === 'amo' || prefix === 'cws') {
+    return { ecosystem: prefix, name }
+  }
   return null
 }

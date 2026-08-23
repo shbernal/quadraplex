@@ -73,6 +73,11 @@ export function statusPayload(): StatusPayload {
       'PyPI has no public per-user package listing, so nothing is discovered automatically. Add "include": ["pypi:<package>"] to config.json.',
     )
   }
+  if (discovery.cws === 'empty') {
+    hints.push(
+      'The Chrome Web Store has no listing of one developer\'s extensions and no read API. Add "include": ["cws:<32 letter id>"] to config.json.',
+    )
+  }
   if (discovery.amo === 'empty') {
     hints.push(
       'AMO discovery keys on the author\'s numeric user id. Set "accounts": {"amo": "<id>"} in config.json.',
@@ -99,7 +104,9 @@ export function statusTable(payload: StatusPayload): string {
       t.id,
       t.headline.metric,
       t.headline.value === null ? '-' : String(t.headline.value),
-      formatDelta(t.delta) + since(t.deltaBaselineAt),
+      // A headline the source publishes as text cannot be subtracted, so it gets no
+      // delta rather than a permanent "new".
+      typeof t.headline.value === 'number' ? formatDelta(t.delta) + since(t.deltaBaselineAt) : '',
       relativeAge(t.fetchedAt),
     ])
   }

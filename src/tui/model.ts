@@ -91,6 +91,10 @@ function mergeSeries(all: SeriesPoint[][]): SeriesPoint[] {
 function displayName(targets: Target[], ownScope: string | undefined): string {
   const repo = targets.find((t) => t.ecosystem === 'github')
   if (repo) return repo.name.split('/').at(-1)!
+  // A Chrome extension is identified by an opaque 32 letter id, so an unlinked one falls
+  // back to the title its listing carries.
+  const titled = targets.find((t) => typeof t.metrics.title === 'string')
+  if (titled) return titled.metrics.title as string
   const name = targets[0]!.name
   if (ownScope && name.startsWith(`@${ownScope}/`)) return name.slice(ownScope.length + 2)
   return name.replace(/^@/, '')

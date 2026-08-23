@@ -28,8 +28,8 @@ export const DEFAULT_CONFIG: Config = {
   includeArchived: false,
   includeForks: false,
   links: {},
-  ttl: { npm: '24h', pypi: '24h', github: '1h', amo: '24h', curves: '30d' },
-  deltaWindow: { npm: '24h', pypi: '24h', github: '24h', amo: '24h' },
+  ttl: { npm: '24h', pypi: '24h', github: '1h', amo: '24h', cws: '24h', curves: '30d' },
+  deltaWindow: { npm: '24h', pypi: '24h', github: '24h', amo: '24h', cws: '24h' },
 }
 
 export function loadConfig(): Config {

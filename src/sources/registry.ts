@@ -4,12 +4,14 @@ import { npmSource } from './npm.ts'
 import { pypiSource } from './pypi.ts'
 import { githubSource } from './github.ts'
 import { amoSource } from './amo.ts'
+import { cwsSource } from './cws.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
   pypi: pypiSource,
   github: githubSource,
   amo: amoSource,
+  cws: cwsSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {

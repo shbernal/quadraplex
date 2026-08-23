@@ -61,7 +61,7 @@ One shape across ecosystems, so no consumer special-cases.
 ```ts
 type Target = {
   id: string // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse", "amo:rebobinate"
-  ecosystem: 'npm' | 'pypi' | 'github' | 'amo'
+  ecosystem: 'npm' | 'pypi' | 'github' | 'amo' | 'cws'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -78,6 +78,30 @@ type Target = {
 Ecosystem-specific fields live inside `metrics`. A snapshot carries everything above
 except `deltas`, `deltaBaselineAt` and `stale`, which are derived at read time from the
 log and the clock.
+
+## Sources
+
+| Source | Discovery         | Serves                                         | Cost per target |
+| ------ | ----------------- | ---------------------------------------------- | --------------- |
+| npm    | maintainer search | daily downloads, version, repo link            | 1 request       |
+| pypi   | config            | daily downloads, version, repo link            | 2 requests      |
+| github | account repos     | stars, forks, the issue and PR split           | 1 to 2 requests |
+| amo    | author id search  | daily users, weekly downloads, rating, version | 0, search pays  |
+| cws    | config            | a bucketed user count, rating, version         | 1 page          |
+
+**The Chrome Web Store is the one source with no API.** Its published API manages items
+and exposes no metrics, and the developer dashboard's numbers never leave the browser, so
+the listing page is the only public reading of them. Two consequences are baked into the
+shape of a `cws:` target rather than papered over:
+
+- `users` is a **string**, because Google publishes a bucket. `"1,000"` is a rounded label,
+  and the badge is missing entirely below a threshold, which reads as `null`. Storing it as
+  a number would invite a delta, and a delta across buckets measures the boundary moving,
+  not the users. Every consumer already suppresses deltas on a metric that is not a number.
+- Every field is parsed independently and every one is allowed to be `null`. A layout
+  change costs a metric and keeps the target, which is the same bargain a missing token
+  strikes on GitHub. The one exception is the listing title: without it the response was
+  not a listing, and the target records the error instead of an empty row.
 
 ## Deltas
 
@@ -105,6 +129,7 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | pypi      | 24h | pypistats lags about a day                   |
 | github    | 1h  | issues and PRs move within a day             |
 | amo       | 24h | daily users is recomputed once a day         |
+| cws       | 24h | the published user count is a daily bucket   |
 | curves    | 30d | star history is immutable except at the tail |
 
 **Partial failure is normal.** A registry 503 is a Tuesday. A failing target keeps its last
@@ -115,7 +140,8 @@ and exits non-zero only when every target failed.
 
 A published package and its repo are one project to a human. The link is derived from
 source metadata, `repository` on npm, `project_urls` on PyPI and `homepage` on AMO, stored
-in `links`, and overridable in config. Only the TUI consumes it, but retrofitting an identity concept onto
+in `links`, and overridable in config. A Chrome Web Store listing publishes no repository
+field at all, so a `cws:` target is linked from config or not at all. Only the TUI consumes it, but retrofitting an identity concept onto
 a store that already has history is painful, so it is in from the start.
 
 ## Config
@@ -131,11 +157,19 @@ instead would leave those targets frozen in the log and reported stale forever.
 {
   "accounts": { "npm": "shbernal", "pypi": "shbernal", "github": "shbernal", "amo": "20068285" },
   "exclude": ["npm:some-experiment"],
-  "include": ["pypi:thing-discovery-missed"],
+  "include": ["pypi:thing-discovery-missed", "cws:hjagmapcdgdffjbbedipfoocmkmhbjeh"],
   "includeArchived": false,
   "includeForks": false,
   "links": { "npm:@shbernal/gitpulse": ["gh:shbernal/gitpulse"] },
-  "ttl": { "npm": "24h", "pypi": "24h", "github": "1h", "amo": "24h", "curves": "30d" },
-  "deltaWindow": { "npm": "24h", "pypi": "24h", "github": "24h", "amo": "24h" },
+  // A Chrome listing names no repository, so its link is the one case config must supply.
+  "ttl": {
+    "npm": "24h",
+    "pypi": "24h",
+    "github": "1h",
+    "amo": "24h",
+    "cws": "24h",
+    "curves": "30d",
+  },
+  "deltaWindow": { "npm": "24h", "pypi": "24h", "github": "24h", "amo": "24h", "cws": "24h" },
 }
 ```

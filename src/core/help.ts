@@ -9,11 +9,12 @@ Usage
   qplex pypi <pkg>             one PyPI package
   qplex gh <owner/repo>        one GitHub repo
   qplex amo <slug>             one Firefox add-on
+  qplex cws <id>               one Chrome extension
 
 Options
   --json                       machine-readable output
   --fresh                      refetch, allowed only on a single target
-  --only <ecosystem>           refresh one of npm, pypi, github, amo
+  --only <ecosystem>           refresh one of npm, pypi, github, amo, cws
   --curves                     refresh only star curves, never touched by a plain refresh
   --version, --help
 
