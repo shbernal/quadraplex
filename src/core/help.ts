@@ -8,11 +8,12 @@ Usage
   qplex npm <pkg>              one npm package
   qplex pypi <pkg>             one PyPI package
   qplex gh <owner/repo>        one GitHub repo
+  qplex amo <slug>             one Firefox add-on
 
 Options
   --json                       machine-readable output
   --fresh                      refetch, allowed only on a single target
-  --only <ecosystem>           refresh one of npm, pypi, github
+  --only <ecosystem>           refresh one of npm, pypi, github, amo
   --curves                     refresh only star curves, never touched by a plain refresh
   --version, --help
 

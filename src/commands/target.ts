@@ -24,6 +24,7 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   pypi: 'pypi',
   gh: 'github',
   github: 'github',
+  amo: 'amo',
 }
 
 /**

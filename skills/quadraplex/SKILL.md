@@ -1,12 +1,13 @@
 ---
 name: quadraplex
-description: Read portfolio state for the npm packages, PyPI packages and GitHub repos a user publishes, including download and star deltas. Use when asked what changed across someone's published projects, how a package or repo is doing, or which of their projects moved recently.
+description: Read portfolio state for the npm packages, PyPI packages, Firefox add-ons and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, add-on or repo is doing, or which of their projects moved recently.
 ---
 
 # quadraplex
 
-A local store of everything the user publishes: npm packages, PyPI packages and GitHub
-repos, with per-day download history and deltas measured against a time anchored baseline.
+A local store of everything the user publishes: npm packages, PyPI packages, Firefox
+add-ons and GitHub repos, with per-day download history where a source serves one, and
+deltas measured against a time anchored baseline.
 
 The store is already on disk. Your job is to read it, not to rebuild it.
 
@@ -23,7 +24,7 @@ When `XDG_DATA_HOME` is unset that is `~/.local/share/quadraplex/state.json`.
 
 Each entry carries `id`, `ecosystem`, `name`, `url`, `metrics`, `deltas`,
 `deltaBaselineAt`, `links`, `fetchedAt` and `stale`. The file itself carries
-`schemaVersion`, which is `1`.
+`schemaVersion`, which is `2`.
 
 Archived repos and forks are absent unless `includeArchived` or `includeForks` is set in
 config. Treat the portfolio as the projects the user actively publishes, not as a listing
@@ -47,6 +48,7 @@ than every metric.
 qplex npm charcheck --json
 qplex pypi mcp-server-rfc --json
 qplex gh shbernal/gitpulse --json
+qplex amo rebobinate --json
 ```
 
 Add `--fresh` to refetch that one target when the answer has to be current:
@@ -74,6 +76,10 @@ discovered target, because no snapshot exists far enough back to compare against
 **`stale` is a computed verdict** against a per-ecosystem TTL. Trust it. Do not re-derive
 staleness by comparing `fetchedAt` to the current time, and do not treat a stale target as
 missing. It has real values, they are just older than their TTL.
+
+**An add-on has no per-day series.** AMO serves download history only to the add-on's
+owner, so `amo:` targets carry `users`, the average daily user count, as a level rather
+than a flow. Its history is whatever the store has accumulated, exactly like stars.
 
 Also worth knowing: `openIssuesAndPRs` is GitHub's combined count. When `openIssues` and
 `openPRs` are non-null the split was actually counted; when they are null, only the

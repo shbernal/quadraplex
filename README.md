@@ -1,7 +1,8 @@
 # quadraplex
 
-One monitor for everything you publish. npm packages, PyPI packages and GitHub repos land
-in a single local store, and quadraplex tells you what moved since last time.
+One monitor for everything you publish. npm packages, PyPI packages, Firefox add-ons and
+GitHub repos land in a single local store, and quadraplex tells you what moved since last
+time.
 
 Named after the Quadraplex T-3000, the computer that oversees the lab in _Dexter's
 Laboratory_. It reports on the facility. It does not run it.
@@ -32,14 +33,15 @@ qplex refresh     # the only command that hits the network
 qplex             # open the dashboard
 ```
 
-`refresh` discovers your npm packages and public GitHub repos from your account name.
+`refresh` discovers your npm packages, Firefox add-ons and public GitHub repos from your
+account name. AMO keys on the numeric author id, which is what its API accepts.
 PyPI has no public per-user listing, so those packages are named in the config file.
 
 Config lives at `~/.local/share/quadraplex/config.json` and every key is optional:
 
 ```jsonc
 {
-  "accounts": { "npm": "you", "pypi": "you", "github": "you" },
+  "accounts": { "npm": "you", "pypi": "you", "github": "you", "amo": "123456" },
   "include": ["pypi:your-package"],
   "includeArchived": false,
   "includeForks": false,

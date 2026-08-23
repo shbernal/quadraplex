@@ -10,7 +10,7 @@ Every JSON payload carries `schemaVersion`, and every target inside one carries
 With a TTY, opens the dashboard. Piped or redirected, prints the `status` table instead
 and never enters raw mode.
 
-## `qplex refresh [--only npm|pypi|github] [--curves]`
+## `qplex refresh [--only npm|pypi|github|amo] [--curves]`
 
 The only command that walks the portfolio. Discovers targets, fetches each one, appends
 one snapshot line per target, then rewrites `state.json`.
@@ -37,7 +37,7 @@ here".
 
 One ecosystem, names plus a one-line state each, from cache. `--fresh` is a usage error.
 
-## `qplex npm <pkg> | pypi <pkg> | gh <owner/repo> [--json] [--fresh]`
+## `qplex npm <pkg> | pypi <pkg> | gh <owner/repo> | amo <slug> [--json] [--fresh]`
 
 One target in full: every metric, every delta, the download or star series when there is
 one, and the GitHub issue and PR detail used by the dashboard modal.

@@ -73,6 +73,11 @@ export function statusPayload(): StatusPayload {
       'PyPI has no public per-user package listing, so nothing is discovered automatically. Add "include": ["pypi:<package>"] to config.json.',
     )
   }
+  if (discovery.amo === 'empty') {
+    hints.push(
+      'AMO discovery keys on the author\'s numeric user id. Set "accounts": {"amo": "<id>"} in config.json.',
+    )
+  }
   if (targets.length === 0) hints.push('The store is empty. Run "qplex refresh" to populate it.')
 
   return {

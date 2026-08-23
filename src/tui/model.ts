@@ -11,7 +11,7 @@ export type Project = {
   targets: Target[]
   changed: boolean
   stale: boolean
-  /** The npm or PyPI series that drives the row's sparkline, empty when there is none. */
+  /** Per-day history behind the row's sparkline, empty when no source serves one. */
   series: SeriesPoint[]
   downloads: Metric | null
   stars: Metric | null
@@ -54,7 +54,7 @@ function group(targets: Target[]): Target[][] {
 
 /**
  * A monorepo publishes several packages from one repo, so a project's headline number is
- * the sum across its registry targets. A delta is only meaningful when every contributing
+ * the sum across its distribution targets. A delta is only meaningful when every contributing
  * target has a baseline, otherwise the sum would silently drop the ones that do not.
  */
 function metric(targets: Target[], key: string): Metric | null {
@@ -101,7 +101,9 @@ export function buildProjects(): Project[] {
   const state = loadState(config)
   const projects = group(state.targets).map((targets): Project => {
     const ordered = targets.toSorted((a, b) => a.ecosystem.localeCompare(b.ecosystem))
-    const registries = ordered.filter((t) => t.ecosystem === 'npm' || t.ecosystem === 'pypi')
+    // Anything that is not a repo can report downloads. Only the registries serve a
+    // per-day history, so AMO adds to the number without adding to the trace.
+    const distributions = ordered.filter((t) => t.ecosystem !== 'github')
     const repos = ordered.filter((t) => t.ecosystem === 'github')
     return {
       key: ordered.map((t) => t.id).join('+'),
@@ -111,8 +113,8 @@ export function buildProjects(): Project[] {
         t.deltas ? Object.values(t.deltas).some((d) => d !== null && d !== 0) : false,
       ),
       stale: ordered.some((t) => t.stale),
-      series: mergeSeries(registries.map((t) => readSeries(t.id))),
-      downloads: metric(registries, HEADLINE_METRIC.npm),
+      series: mergeSeries(distributions.map((t) => readSeries(t.id))),
+      downloads: metric(distributions, HEADLINE_METRIC.npm),
       stars: metric(repos, HEADLINE_METRIC.github),
     }
   })

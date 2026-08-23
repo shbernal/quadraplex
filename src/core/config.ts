@@ -20,14 +20,16 @@ export type Config = {
  * counterparts move continuously, and a delta measured over an hour is noise.
  */
 export const DEFAULT_CONFIG: Config = {
-  accounts: { npm: 'shbernal', pypi: 'shbernal', github: 'shbernal' },
+  // AMO identifies an author by numeric user id, which is the only handle an account
+  // without a public username has.
+  accounts: { npm: 'shbernal', pypi: 'shbernal', github: 'shbernal', amo: '20068285' },
   exclude: [],
   include: [],
   includeArchived: false,
   includeForks: false,
   links: {},
-  ttl: { npm: '24h', pypi: '24h', github: '1h', curves: '30d' },
-  deltaWindow: { npm: '24h', pypi: '24h', github: '24h' },
+  ttl: { npm: '24h', pypi: '24h', github: '1h', amo: '24h', curves: '30d' },
+  deltaWindow: { npm: '24h', pypi: '24h', github: '24h', amo: '24h' },
 }
 
 export function loadConfig(): Config {

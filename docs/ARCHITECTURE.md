@@ -48,7 +48,9 @@ the wrong shape for an append-only log, so they live in `cache.json` instead.
 
 `series/` holds the per-day download counts. Both registries serve that history
 themselves, so it is fetched whole on every refresh rather than accumulated line by line,
-which keeps a 365-point array out of every snapshot record.
+which keeps a 365-point array out of every snapshot record. AMO serves per-day statistics
+only to an add-on's owner, so an add-on has no series and its history is whatever
+`snapshots.jsonl` has accumulated since the day it was first seen.
 
 Retention is everything, in v1. A line is small.
 
@@ -58,8 +60,8 @@ One shape across ecosystems, so no consumer special-cases.
 
 ```ts
 type Target = {
-  id: string // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse"
-  ecosystem: 'npm' | 'pypi' | 'github'
+  id: string // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse", "amo:rebobinate"
+  ecosystem: 'npm' | 'pypi' | 'github' | 'amo'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -102,6 +104,7 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | npm       | 24h | download data is daily                       |
 | pypi      | 24h | pypistats lags about a day                   |
 | github    | 1h  | issues and PRs move within a day             |
+| amo       | 24h | daily users is recomputed once a day         |
 | curves    | 30d | star history is immutable except at the tail |
 
 **Partial failure is normal.** A registry 503 is a Tuesday. A failing target keeps its last
@@ -111,8 +114,8 @@ and exits non-zero only when every target failed.
 ## Linking targets across ecosystems
 
 A published package and its repo are one project to a human. The link is derived from
-registry metadata, `repository` on npm and `project_urls` on PyPI, stored in `links`, and
-overridable in config. Only the TUI consumes it, but retrofitting an identity concept onto
+source metadata, `repository` on npm, `project_urls` on PyPI and `homepage` on AMO, stored
+in `links`, and overridable in config. Only the TUI consumes it, but retrofitting an identity concept onto
 a store that already has history is painful, so it is in from the start.
 
 ## Config
@@ -126,13 +129,13 @@ instead would leave those targets frozen in the log and reported stale forever.
 
 ```jsonc
 {
-  "accounts": { "npm": "shbernal", "pypi": "shbernal", "github": "shbernal" },
+  "accounts": { "npm": "shbernal", "pypi": "shbernal", "github": "shbernal", "amo": "20068285" },
   "exclude": ["npm:some-experiment"],
   "include": ["pypi:thing-discovery-missed"],
   "includeArchived": false,
   "includeForks": false,
   "links": { "npm:@shbernal/gitpulse": ["gh:shbernal/gitpulse"] },
-  "ttl": { "npm": "24h", "pypi": "24h", "github": "1h", "curves": "30d" },
-  "deltaWindow": { "npm": "24h", "pypi": "24h", "github": "24h" },
+  "ttl": { "npm": "24h", "pypi": "24h", "github": "1h", "amo": "24h", "curves": "30d" },
+  "deltaWindow": { "npm": "24h", "pypi": "24h", "github": "24h", "amo": "24h" },
 }
 ```
