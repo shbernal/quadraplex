@@ -36,6 +36,13 @@ export function resetHttpCache(): void {
 
 const RETRYABLE = new Set([408, 425, 429, 500, 502, 503, 504])
 
+/** QUADRAPLEX_DEBUG_HTTP=1 traces every request, which is how the 304 rate is checked. */
+function trace(status: number, url: string, headers: Headers): void {
+  if (!process.env.QUADRAPLEX_DEBUG_HTTP) return
+  const remaining = headers.get('x-ratelimit-remaining')
+  process.stderr.write(`${status} ${url}${remaining ? ` (quota left ${remaining})` : ''}\n`)
+}
+
 function backoffMs(attempt: number, retryAfter: string | null): number {
   const seconds = retryAfter ? Number(retryAfter) : Number.NaN
   if (Number.isFinite(seconds)) return Math.min(seconds * 1000, 30_000)
@@ -82,8 +89,10 @@ export async function getJson<T>(url: string, options: GetOptions = {}): Promise
     }
 
     if (response.status === 304) {
+      trace(304, url, response.headers)
       return { status: 304, notModified: true, data: null, headers: response.headers }
     }
+    trace(response.status, url, response.headers)
 
     if (!response.ok) {
       throw new Error(`${response.status} ${response.statusText} for ${url}`)
