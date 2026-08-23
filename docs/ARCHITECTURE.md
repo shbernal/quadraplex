@@ -58,19 +58,19 @@ One shape across ecosystems, so no consumer special-cases.
 
 ```ts
 type Target = {
-  id: string; // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse"
-  ecosystem: "npm" | "pypi" | "github";
-  name: string;
-  url: string;
-  discovered: "auto" | "config";
-  metrics: Record<string, number | string | null>;
-  deltas: Record<string, number | null> | null;
-  deltaBaselineAt?: string;
-  links: string[];
-  fetchedAt: string;
-  stale: boolean;
-  errors?: string[];
-};
+  id: string // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse"
+  ecosystem: 'npm' | 'pypi' | 'github'
+  name: string
+  url: string
+  discovered: 'auto' | 'config'
+  metrics: Record<string, number | string | null>
+  deltas: Record<string, number | null> | null
+  deltaBaselineAt?: string
+  links: string[]
+  fetchedAt: string
+  stale: boolean
+  errors?: string[]
+}
 ```
 
 Ecosystem-specific fields live inside `metrics`. A snapshot carries everything above

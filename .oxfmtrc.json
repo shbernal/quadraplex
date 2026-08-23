@@ -1,8 +1,11 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "indentWidth": 2,
-  "lineWidth": 100,
-  "quoteStyle": "single",
-  "semicolons": "asNeeded",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "proseWrap": "preserve",
+  "sortImports": false,
   "ignorePatterns": ["dist", "node_modules"]
 }

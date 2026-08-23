@@ -7,14 +7,14 @@ pre-commit:
   parallel: true
   jobs:
     - name: format
-      glob: "*.{ts,tsx,js,json}"
+      glob: '*.{ts,tsx,js,json}'
       run: bun run oxfmt --check {staged_files}
     - name: lint
-      glob: "*.{ts,tsx}"
+      glob: '*.{ts,tsx}'
       run: bun run oxlint --type-aware {staged_files}
     - name: typecheck
-      glob: "*.{ts,tsx}"
+      glob: '*.{ts,tsx}'
       run: bun run typecheck
     - name: prose
-      glob: "{README.md,CONTRIBUTING.md}"
+      glob: '{README.md,CONTRIBUTING.md}'
       run: bun run charcheck {staged_files}

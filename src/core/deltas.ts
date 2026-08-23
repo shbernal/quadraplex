@@ -1,9 +1,9 @@
-import type { Snapshot } from "./types.ts";
+import type { Snapshot } from './types.ts'
 
 export type DeltaResult = {
-  deltas: Record<string, number | null> | null;
-  deltaBaselineAt?: string;
-};
+  deltas: Record<string, number | null> | null
+  deltaBaselineAt?: string
+}
 
 /**
  * Compares against the newest snapshot at least one window older than the current one,
@@ -18,20 +18,20 @@ export function computeDeltas(
   history: Snapshot[],
   windowMs: number,
 ): DeltaResult {
-  const cutoff = Date.parse(current.fetchedAt) - windowMs;
-  let baseline: Snapshot | undefined;
+  const cutoff = Date.parse(current.fetchedAt) - windowMs
+  let baseline: Snapshot | undefined
   for (const snapshot of history) {
-    if (snapshot === current) continue;
-    const at = Date.parse(snapshot.fetchedAt);
-    if (at > cutoff) continue;
-    if (!baseline || at > Date.parse(baseline.fetchedAt)) baseline = snapshot;
+    if (snapshot === current) continue
+    const at = Date.parse(snapshot.fetchedAt)
+    if (at > cutoff) continue
+    if (!baseline || at > Date.parse(baseline.fetchedAt)) baseline = snapshot
   }
-  if (!baseline) return { deltas: null };
+  if (!baseline) return { deltas: null }
 
-  const deltas: Record<string, number | null> = {};
+  const deltas: Record<string, number | null> = {}
   for (const [key, value] of Object.entries(current.metrics)) {
-    const before = baseline.metrics[key];
-    deltas[key] = typeof value === "number" && typeof before === "number" ? value - before : null;
+    const before = baseline.metrics[key]
+    deltas[key] = typeof value === 'number' && typeof before === 'number' ? value - before : null
   }
-  return { deltas, deltaBaselineAt: baseline.fetchedAt };
+  return { deltas, deltaBaselineAt: baseline.fetchedAt }
 }

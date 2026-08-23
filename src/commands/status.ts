@@ -1,39 +1,39 @@
-import { loadConfig } from "../core/config.ts";
-import { deriveState } from "../core/store.ts";
-import { formatDelta, relativeAge, since, table } from "../core/format.ts";
+import { loadConfig } from '../core/config.ts'
+import { loadState } from '../core/store.ts'
+import { formatDelta, relativeAge, since, table } from '../core/format.ts'
 import {
   ECOSYSTEMS,
   HEADLINE_METRIC,
   SCHEMA_VERSION,
   type Ecosystem,
   type Target,
-} from "../core/types.ts";
+} from '../core/types.ts'
 
 export type StatusEntry = {
-  id: string;
-  ecosystem: Ecosystem;
-  name: string;
-  discovered: "auto" | "config";
-  headline: { metric: string; value: number | string | null };
-  delta: number | null;
-  deltaBaselineAt?: string;
-  changed: boolean;
-  stale: boolean;
-  fetchedAt: string;
-  errors?: string[];
-};
+  id: string
+  ecosystem: Ecosystem
+  name: string
+  discovered: 'auto' | 'config'
+  headline: { metric: string; value: number | string | null }
+  delta: number | null
+  deltaBaselineAt?: string
+  changed: boolean
+  stale: boolean
+  fetchedAt: string
+  errors?: string[]
+}
 
 export type StatusPayload = {
-  schemaVersion: number;
-  generatedAt: string;
-  discovery: Record<Ecosystem, "auto" | "config" | "empty">;
-  hints: string[];
-  targets: StatusEntry[];
-};
+  schemaVersion: number
+  generatedAt: string
+  discovery: Record<Ecosystem, 'auto' | 'config' | 'empty'>
+  hints: string[]
+  targets: StatusEntry[]
+}
 
 function entry(target: Target): StatusEntry {
-  const metric = HEADLINE_METRIC[target.ecosystem];
-  const delta = target.deltas ? (target.deltas[metric] ?? null) : null;
+  const metric = HEADLINE_METRIC[target.ecosystem]
+  const delta = target.deltas ? (target.deltas[metric] ?? null) : null
   const out: StatusEntry = {
     id: target.id,
     ecosystem: target.ecosystem,
@@ -46,34 +46,34 @@ function entry(target: Target): StatusEntry {
       : false,
     stale: target.stale,
     fetchedAt: target.fetchedAt,
-  };
-  if (target.deltaBaselineAt) out.deltaBaselineAt = target.deltaBaselineAt;
-  if (target.errors?.length) out.errors = target.errors;
-  return out;
+  }
+  if (target.deltaBaselineAt) out.deltaBaselineAt = target.deltaBaselineAt
+  if (target.errors?.length) out.errors = target.errors
+  return out
 }
 
 export function statusPayload(): StatusPayload {
-  const config = loadConfig();
-  const state = deriveState(config);
-  const targets = state.targets;
+  const config = loadConfig()
+  const state = loadState(config)
+  const targets = state.targets
 
-  const discovery = {} as Record<Ecosystem, "auto" | "config" | "empty">;
-  const hints: string[] = [];
+  const discovery = {} as Record<Ecosystem, 'auto' | 'config' | 'empty'>
+  const hints: string[] = []
   for (const ecosystem of ECOSYSTEMS) {
-    const owned = targets.filter((t) => t.ecosystem === ecosystem);
+    const owned = targets.filter((t) => t.ecosystem === ecosystem)
     discovery[ecosystem] =
       owned.length === 0
-        ? "empty"
-        : owned.every((t) => t.discovered === "config")
-          ? "config"
-          : "auto";
+        ? 'empty'
+        : owned.every((t) => t.discovered === 'config')
+          ? 'config'
+          : 'auto'
   }
-  if (discovery.pypi === "empty") {
+  if (discovery.pypi === 'empty') {
     hints.push(
       'PyPI has no public per-user package listing, so nothing is discovered automatically. Add "include": ["pypi:<package>"] to config.json.',
-    );
+    )
   }
-  if (targets.length === 0) hints.push('The store is empty. Run "qplex refresh" to populate it.');
+  if (targets.length === 0) hints.push('The store is empty. Run "qplex refresh" to populate it.')
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -81,31 +81,31 @@ export function statusPayload(): StatusPayload {
     discovery,
     hints,
     targets: targets.map(entry),
-  };
+  }
 }
 
 export function statusTable(payload: StatusPayload): string {
-  if (payload.targets.length === 0) return payload.hints.join("\n");
+  if (payload.targets.length === 0) return payload.hints.join('\n')
 
-  const rows: string[][] = [["", "TARGET", "METRIC", "VALUE", "DELTA", "AGE"]];
+  const rows: string[][] = [['', 'TARGET', 'METRIC', 'VALUE', 'DELTA', 'AGE']]
   for (const t of payload.targets) {
     rows.push([
-      t.changed ? "*" : t.stale ? "!" : " ",
+      t.changed ? '*' : t.stale ? '!' : ' ',
       t.id,
       t.headline.metric,
-      t.headline.value === null ? "-" : String(t.headline.value),
+      t.headline.value === null ? '-' : String(t.headline.value),
       formatDelta(t.delta) + since(t.deltaBaselineAt),
       relativeAge(t.fetchedAt),
-    ]);
+    ])
   }
 
   const legend = [
-    "",
+    '',
     '* changed   ! stale   delta "new" means no baseline yet, not zero',
     ...ECOSYSTEMS.map((e) => `${e} list: ${payload.discovery[e]}`).map((s) => s),
-  ].join("\n");
+  ].join('\n')
 
-  return `${table(rows, ["left", "left", "left", "right", "right", "right"])}\n${legend}${
-    payload.hints.length ? `\n\n${payload.hints.join("\n")}` : ""
-  }`;
+  return `${table(rows, ['left', 'left', 'left', 'right', 'right', 'right'])}\n${legend}${
+    payload.hints.length ? `\n\n${payload.hints.join('\n')}` : ''
+  }`
 }

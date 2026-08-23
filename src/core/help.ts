@@ -17,4 +17,4 @@ Options
   --version, --help
 
 Breadth comes from cache, freshness comes from a target. status and list never fetch, and
-refresh is the only command that walks the whole portfolio.`;
+refresh is the only command that walks the whole portfolio.`
