@@ -8,12 +8,15 @@ humans as an Ink TUI.
   - `bun test`
   - `bun run typecheck`
   - `bun run lint`
-  - `./bin/quadraplex` (local wrapper, same entrypoint as the published CLI)
+  - `qplex` (symlinked to `bin/quadraplex`, same entrypoint as the published CLI)
+  - `bun run scripts/render-dashboard.ts <cols> <rows> [keys]` after any TUI change
 
 - Key documentation
   - [CONTRIBUTING.md](CONTRIBUTING.md): workflow, layout, conventions
   - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): data model, store, freshness rules
   - [docs/COMMANDS.md](docs/COMMANDS.md): the command surface and its JSON contract
+  - [docs/GITHUB.md](docs/GITHUB.md): rate limits, the issue and PR split, star curves
+  - [skills/quadraplex/SKILL.md](skills/quadraplex/SKILL.md): what agents are taught, pinned to `schemaVersion`
 
 - Hard contracts
   - Breadth comes from cache, freshness comes from a target. `refresh` is the only bulk

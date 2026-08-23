@@ -59,6 +59,12 @@ qplex npm your-pkg --json    # one target, add --fresh to refetch just that one
 `--fresh` requires a target on purpose. There is no way to refetch the whole portfolio
 through the JSON surface, because that is how rate limits die.
 
+An installable skill teaches an agent that access strategy directly:
+
+```sh
+npx skills add shbernal/quadraplex
+```
+
 ## License
 
 MIT
