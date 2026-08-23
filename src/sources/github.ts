@@ -135,7 +135,7 @@ async function issues(repo: string, count: number) {
 
 async function fetchOne(
   descriptor: Descriptor,
-  _config: Config,
+  config: Config,
   previous?: Snapshot,
 ): Promise<Fetched> {
   const name = descriptor.name
@@ -152,7 +152,12 @@ async function fetchOne(
     repo = response.data
   }
 
-  const open = await issues(name, repo.open_issues_count)
+  // A repo the state will drop still gets a snapshot, so it stays current and an
+  // unarchive is noticed, but its issue list is never read and never displayed.
+  const dropped = (repo.archived && !config.includeArchived) || (repo.fork && !config.includeForks)
+  const open = dropped
+    ? { items: null, complete: false }
+    : await issues(name, repo.open_issues_count)
   const items = open.items ?? []
   const known = open.items !== null && open.complete
   const prs = items.filter((item) => item.kind === 'pr').length
@@ -174,6 +179,7 @@ async function fetchOne(
       lastPush: repo.pushed_at,
       defaultBranch: repo.default_branch,
       archived: repo.archived ? 'yes' : 'no',
+      fork: repo.fork ? 'yes' : 'no',
     },
     links: [],
     fetchedAt: new Date().toISOString(),

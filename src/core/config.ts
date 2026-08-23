@@ -7,6 +7,8 @@ export type Config = {
   accounts: Partial<Record<Ecosystem, string>>
   exclude: string[]
   include: string[]
+  includeArchived: boolean
+  includeForks: boolean
   links: Record<string, string[]>
   ttl: Record<Ecosystem | 'curves', string>
   deltaWindow: Record<Ecosystem, string>
@@ -21,6 +23,8 @@ export const DEFAULT_CONFIG: Config = {
   accounts: { npm: 'shbernal', pypi: 'shbernal', github: 'shbernal' },
   exclude: [],
   include: [],
+  includeArchived: false,
+  includeForks: false,
   links: {},
   ttl: { npm: '24h', pypi: '24h', github: '1h', curves: '30d' },
   deltaWindow: { npm: '24h', pypi: '24h', github: '24h' },
@@ -39,6 +43,8 @@ export function loadConfig(): Config {
     accounts: { ...DEFAULT_CONFIG.accounts, ...user.accounts },
     exclude: user.exclude ?? [],
     include: user.include ?? [],
+    includeArchived: user.includeArchived ?? false,
+    includeForks: user.includeForks ?? false,
     links: user.links ?? {},
     ttl: { ...DEFAULT_CONFIG.ttl, ...user.ttl },
     deltaWindow: { ...DEFAULT_CONFIG.deltaWindow, ...user.deltaWindow },
@@ -46,6 +52,22 @@ export function loadConfig(): Config {
   for (const key of [...ECOSYSTEMS, 'curves'] as const) parseDuration(config.ttl[key])
   for (const key of ECOSYSTEMS) parseDuration(config.deltaWindow[key])
   return config
+}
+
+/**
+ * An archived repo and a fork are not things you publish, so they are dropped from the
+ * derived state rather than from discovery. They keep being fetched, which means an
+ * unarchive is picked up by the next refresh instead of leaving a target frozen in the
+ * log and reported stale forever.
+ */
+export function hidden(
+  config: Config,
+  snapshot: { ecosystem: Ecosystem; metrics: Record<string, unknown> },
+): boolean {
+  if (snapshot.ecosystem !== 'github') return false
+  if (!config.includeArchived && snapshot.metrics.archived === 'yes') return true
+  if (!config.includeForks && snapshot.metrics.fork === 'yes') return true
+  return false
 }
 
 export function ttlMs(config: Config, key: Ecosystem | 'curves'): number {

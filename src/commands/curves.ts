@@ -1,4 +1,4 @@
-import { loadConfig, ttlMs } from '../core/config.ts'
+import { hidden, loadConfig, ttlMs } from '../core/config.ts'
 import { flushCache, mapLimit } from '../core/http.ts'
 import { groupById, readCurve, readSnapshots, writeCurve } from '../core/store.ts'
 import { fetchCurve } from '../sources/stars.ts'
@@ -29,6 +29,7 @@ export async function refreshCurves(): Promise<CurveReport> {
     .map((history) => history.at(-1)!)
     .filter((snapshot) => snapshot.ecosystem === 'github')
     .filter((snapshot) => !config.exclude.includes(snapshot.id))
+    .filter((snapshot) => !hidden(config, snapshot))
 
   await mapLimit(repos, CONCURRENCY, async (snapshot) => {
     const stars = snapshot.metrics.stars

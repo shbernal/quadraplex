@@ -10,10 +10,21 @@ GitHub CLI is installed and logged in. Without any of them the client is anonymo
 Discovery is `GET /users/<user>/repos?type=owner&per_page=100`, and the repo objects it
 returns already carry stars, forks, `open_issues_count`, `pushed_at`, `default_branch` and
 `archived`. So a portfolio of any size costs one request per hundred repos for the
-metrics, and one extra request only for a repo that has something open.
+metrics, and one extra request only for a repo that has something open and is not being
+filtered out by `includeArchived` or `includeForks`.
 
 ETags live in `cache.json`, keyed per endpoint, and a 304 counts as a successful
 verification: the stored numbers are current, so `fetchedAt` advances without a transfer.
+
+## Archived repos and forks
+
+Neither is something you publish, so both are dropped from `state.json` by default and
+never reach `status`, `list` or the dashboard. `archived` and `fork` are recorded on every
+snapshot, `includeArchived` and `includeForks` bring them back, and the log keeps their
+history either way.
+
+They are still refreshed, which costs nothing beyond the discovery page they already ride
+in on: their issue lists are never read and their star curves are never built.
 
 ## The issue and pull request split
 

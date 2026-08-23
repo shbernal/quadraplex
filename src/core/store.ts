@@ -1,7 +1,7 @@
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { paths } from './paths.ts'
-import { deltaWindowMs, ttlMs, type Config } from './config.ts'
+import { deltaWindowMs, hidden, ttlMs, type Config } from './config.ts'
 import { computeDeltas } from './deltas.ts'
 import {
   SCHEMA_VERSION,
@@ -96,6 +96,7 @@ export function deriveState(config: Config, now = Date.now()): State {
   for (const history of byId.values()) {
     const latest = history.at(-1)!
     if (config.exclude.includes(latest.id)) continue
+    if (hidden(config, latest)) continue
     targets.push(toTarget(latest, history, config, now))
   }
   targets.sort((a, b) => a.id.localeCompare(b.id))

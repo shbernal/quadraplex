@@ -6,7 +6,7 @@ import { DEFAULT_CONFIG, loadConfig } from '../src/core/config.ts'
 import { computeDeltas } from '../src/core/deltas.ts'
 import { deriveState, readSnapshots, appendSnapshots, rebuildState } from '../src/core/store.ts'
 import { paths } from '../src/core/paths.ts'
-import type { Snapshot } from '../src/core/types.ts'
+import type { MetricValue, Snapshot } from '../src/core/types.ts'
 
 let dir: string
 
@@ -14,7 +14,7 @@ const HOUR = 3_600_000
 const DAY = 24 * HOUR
 const NOW = Date.parse('2026-08-23T12:00:00.000Z')
 
-function snap(id: string, at: number, metrics: Record<string, number>): Snapshot {
+function snap(id: string, at: number, metrics: Record<string, MetricValue>): Snapshot {
   return {
     id,
     ecosystem: id.startsWith('gh:') ? 'github' : id.startsWith('pypi:') ? 'pypi' : 'npm',
@@ -113,5 +113,36 @@ test('excluded targets never reach state.json', () => {
     snap('npm:b', NOW, { downloadsWeek: 1 }),
   ])
   writeFileSync(paths.config, JSON.stringify({ exclude: ['npm:b'] }))
+  expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual(['npm:a'])
+})
+
+test('archived repos and forks are dropped from state.json, and config puts them back', () => {
+  appendSnapshots([
+    snap('gh:o/live', NOW, { stars: 1, archived: 'no', fork: 'no' }),
+    snap('gh:o/old', NOW, { stars: 2, archived: 'yes', fork: 'no' }),
+    snap('gh:o/forked', NOW, { stars: 3, archived: 'no', fork: 'yes' }),
+  ])
+  expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual(['gh:o/live'])
+
+  writeFileSync(paths.config, JSON.stringify({ includeArchived: true, includeForks: true }))
+  expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual([
+    'gh:o/forked',
+    'gh:o/live',
+    'gh:o/old',
+  ])
+})
+
+test('a dropped repo keeps its history, so unarchiving restores its deltas', () => {
+  appendSnapshots([
+    snap('gh:o/old', NOW - DAY, { stars: 2, archived: 'yes', fork: 'no' }),
+    snap('gh:o/old', NOW, { stars: 5, archived: 'no', fork: 'no' }),
+  ])
+  expect(readSnapshots()).toHaveLength(2)
+  const target = deriveState(loadConfig(), NOW).targets.find((t) => t.id === 'gh:o/old')
+  expect(target?.deltas?.stars).toBe(3)
+})
+
+test('the archived and fork flags only ever hide github targets', () => {
+  appendSnapshots([snap('npm:a', NOW, { downloadsWeek: 1, archived: 'yes', fork: 'yes' })])
   expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual(['npm:a'])
 })

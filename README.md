@@ -41,8 +41,13 @@ Config lives at `~/.local/share/quadraplex/config.json` and every key is optiona
 {
   "accounts": { "npm": "you", "pypi": "you", "github": "you" },
   "include": ["pypi:your-package"],
+  "includeArchived": false,
+  "includeForks": false,
 }
 ```
+
+Archived repos and forks are left out of every view by default, since neither is something
+you publish. Set either key to `true` to count them again.
 
 In the dashboard, `r` refreshes, `o` opens the selected project in a browser, `enter`
 opens a detail view, and `q` quits.

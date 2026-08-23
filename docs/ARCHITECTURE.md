@@ -119,11 +119,18 @@ a store that already has history is painful, so it is in from the start.
 
 Every key is optional and the tool works with no config at all.
 
+`includeArchived` and `includeForks` govern what the derived state keeps, not what refresh
+fetches. An archived repo and a fork are still snapshotted on every refresh, so flipping
+either key back on is free and an unarchive is noticed on its own. Filtering at discovery
+instead would leave those targets frozen in the log and reported stale forever.
+
 ```jsonc
 {
   "accounts": { "npm": "shbernal", "pypi": "shbernal", "github": "shbernal" },
   "exclude": ["npm:some-experiment"],
   "include": ["pypi:thing-discovery-missed"],
+  "includeArchived": false,
+  "includeForks": false,
   "links": { "npm:@shbernal/gitpulse": ["gh:shbernal/gitpulse"] },
   "ttl": { "npm": "24h", "pypi": "24h", "github": "1h", "curves": "30d" },
   "deltaWindow": { "npm": "24h", "pypi": "24h", "github": "24h" },
