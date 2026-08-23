@@ -22,6 +22,18 @@ bun test
 bun run typecheck
 bun run lint
 bun run format
+bun run build          # bundles for node, which is what npm ships
+```
+
+`QUADRAPLEX_DATA_DIR` points the store somewhere else, which is how the tests get an
+isolated one. `QUADRAPLEX_DEBUG_HTTP=1` traces every request with its status and remaining
+rate limit, which is how conditional-request behaviour is checked.
+
+After any change to the dashboard, render a frame instead of squinting at a terminal:
+
+```sh
+bun run scripts/render-dashboard.ts 100 24        # a frame at a fixed size
+bun run scripts/render-dashboard.ts 80 20 $'G\r'  # replay keys first
 ```
 
 The pre-commit hook runs the same checks on staged files, plus a prose check on the

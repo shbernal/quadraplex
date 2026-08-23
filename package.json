@@ -36,7 +36,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "prose": "charcheck README.md CONTRIBUTING.md",
-    "build": "bun build src/bin.ts --target node --outfile dist/cli.js && chmod +x dist/cli.js",
+    "build": "bun run scripts/build.ts",
     "prepack": "bun run build"
   },
   "dependencies": {
