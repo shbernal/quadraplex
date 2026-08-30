@@ -16,7 +16,9 @@ export function formatDelta(delta: number | null | undefined): string {
 export function formatDate(iso: string | undefined): string {
   if (!iso) return ''
   const date = new Date(iso)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  // UTC throughout, because a date-only value like "2026-08-06" is midnight UTC and would
+  // otherwise print as the fifth for every reader west of Greenwich.
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
 export function since(iso: string | undefined): string {
@@ -37,6 +39,51 @@ export function relativeAge(iso: string): string {
   const hours = Math.round(minutes / 60)
   if (hours < 48) return `${hours}h ago`
   return `${Math.round(hours / 24)}d ago`
+}
+
+/** Values a source publishes as an ISO date or timestamp, recognised by shape. */
+const ISO = /^\d{4}-\d{2}-\d{2}([T ][\d:.]+(Z|[+-][\d:]+)?)?$/
+
+const LABELS: Record<string, string> = {
+  defaultBranch: 'default branch',
+  downloadsDay: 'downloads, day',
+  downloadsMonth: 'downloads, month',
+  downloadsWeek: 'downloads, week',
+  lastPublish: 'last publish',
+  lastPush: 'last push',
+  offeredBy: 'offered by',
+  openIssues: 'open issues',
+  // open_issues_count includes pull requests, and the name says so wherever it is shown.
+  openIssuesAndPRs: 'open issues + PRs',
+  openPRs: 'open PRs',
+}
+
+export function metricLabel(key: string): string {
+  return LABELS[key] ?? key
+}
+
+/**
+ * A timestamp is the one metric value a reader cannot use as published. Everything else
+ * is printed as the source gave it, including Google's "1,000", which is a label.
+ */
+export function metricText(value: number | string | null | undefined): string {
+  if (value === null || value === undefined) return '-'
+  if (typeof value !== 'string' || !ISO.test(value)) return String(value)
+  const at = Date.parse(value)
+  if (Number.isNaN(at)) return value
+  const days = (Date.now() - at) / 86_400_000
+  const stamped =
+    new Date(at).getUTCFullYear() === new Date().getUTCFullYear()
+      ? formatDate(value)
+      : new Date(at).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          timeZone: 'UTC',
+        })
+  // Past a year the relative half stops helping: "Jun 22, 2025" places it, "434d ago"
+  // only makes the reader do the arithmetic back.
+  return days >= 0 && days <= 365 ? `${stamped}, ${relativeAge(value)}` : stamped
 }
 
 export function table(rows: string[][], align: ('left' | 'right')[] = []): string {

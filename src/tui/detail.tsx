@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Box, Text } from 'ink'
 import type { Drift } from '../core/drift.ts'
-import { formatDelta, relativeAge, since, span } from '../core/format.ts'
+import { formatDelta, metricLabel, metricText, relativeAge, since, span } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import type { Target } from '../core/types.ts'
 import type { Project, Stargazers } from './model.ts'
@@ -12,11 +12,6 @@ import { theme } from './theme.ts'
  * count of rows and the pane can be windowed by slicing.
  */
 type Line = { key: string; node: ReactNode; focus?: number }
-
-/** open_issues_count includes pull requests, and the name says so wherever it is shown. */
-function label(key: string): string {
-  return key === 'openIssuesAndPRs' ? 'open issues + PRs' : key
-}
 
 /**
  * The combined count only earns a line when the split is unknown. Showing both invites
@@ -128,8 +123,8 @@ function targetLines(target: Target, focus: number, selected: boolean): Line[] {
       node: (
         <Text wrap="truncate-end">
           {'  '}
-          {label(key).padEnd(22)}
-          <Text bold>{value === null ? '-' : String(value)}</Text>
+          {metricLabel(key).padEnd(22)}
+          <Text bold>{metricText(value)}</Text>
           {typeof value === 'number' ? (
             <Text color={delta && delta > 0 ? theme.up : theme.muted}>
               {'  '}
@@ -342,7 +337,7 @@ export function Item({
       </Box>
       <Box marginTop={1}>
         <Text color={theme.muted}>
-          {more > 0 ? `${more} more lines, j/k scroll   ` : ''}esc back o open q quit
+          {`${more > 0 ? `${more} more ${more === 1 ? 'line' : 'lines'}, j/k scroll   ` : ''}o open   esc back`}
         </Text>
       </Box>
     </Box>

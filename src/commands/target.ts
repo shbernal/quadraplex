@@ -2,7 +2,7 @@ import { UsageError } from '../core/args.ts'
 import { loadConfig } from '../core/config.ts'
 import { flushCache } from '../core/http.ts'
 import { appendSnapshots, loadState, rebuildState, readSeries, writeSeries } from '../core/store.ts'
-import { formatDelta, relativeAge, since, table } from '../core/format.ts'
+import { formatDelta, metricLabel, metricText, relativeAge, since, table } from '../core/format.ts'
 import {
   SCHEMA_VERSION,
   targetId,
@@ -72,8 +72,8 @@ export function targetText(payload: TargetPayload): string {
   for (const [key, value] of Object.entries(target.metrics)) {
     const delta = target.deltas ? (target.deltas[key] ?? null) : null
     rows.push([
-      key,
-      value === null ? '-' : String(value),
+      metricLabel(key),
+      metricText(value),
       typeof value === 'number' ? formatDelta(delta) + since(target.deltaBaselineAt) : '',
     ])
   }

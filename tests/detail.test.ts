@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test'
 import { EventEmitter } from 'node:events'
 import { render } from 'ink'
 import { createElement } from 'react'
+import { metricLabel, metricText } from '../src/core/format.ts'
 import { Detail } from '../src/tui/detail.tsx'
 import { focusables, homeUrl, type Project } from '../src/tui/model.ts'
 import type { Ecosystem, Target } from '../src/core/types.ts'
@@ -111,4 +112,14 @@ test('the list opens a project at its repo, not at whichever store sorts first',
   expect(homeUrl(project([target('cws:abcdefghijklmnopabcdefghijklmnop', 'cws', 2)]))).toBe(
     'https://example.test/cws:abcdefghijklmnopabcdefghijklmnop',
   )
+})
+
+test('a metric value is printed as published, except a timestamp nobody can read', () => {
+  expect(metricText('1,000')).toBe('1,000')
+  expect(metricText(null)).toBe('-')
+  expect(metricText('master')).toBe('master')
+  expect(metricText('2019-06-22')).toBe('Jun 22, 2019')
+  expect(metricText('2019-06-22T07:20:29Z')).toBe('Jun 22, 2019')
+  expect(metricLabel('downloadsWeek')).toBe('downloads, week')
+  expect(metricLabel('stars')).toBe('stars')
 })

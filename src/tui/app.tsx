@@ -18,6 +18,7 @@ import {
 } from './model.ts'
 import { Sparkline } from './sparkline.tsx'
 import { Detail, Item } from './detail.tsx'
+import { Help } from './help.tsx'
 import { DRIFT, MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
 
 /**
@@ -188,12 +189,14 @@ function Header({
   projects,
   total,
   view,
+  baselineAt,
   width,
   cols,
 }: {
   projects: Project[]
   total: number
   view: View
+  baselineAt: string | undefined
   width: number
   cols: Columns
 }) {
@@ -230,6 +233,7 @@ function Header({
             {' projects, '}
             {changed} changed
             {newest ? `, refreshed ${relativeAge(newest)}` : ''}
+            {baselineAt ? `, deltas${since(baselineAt)}` : ''}
           </Text>
         </Box>
       </Box>
@@ -241,7 +245,7 @@ function Header({
           {'WEEK'.padStart(7)}
           {cols.delta ? ` ${'DELTA'.padStart(7)}` : ''}
           {cols.stars ? `   ${'STARS'.padStart(6)} ${'+/-'.padStart(5)}` : ''}
-          {cols.spark ? ' '.repeat(cols.spark + 2) : ''}
+          {cols.spark ? '90d'.padStart(cols.spark + 2) : ''}
           {cols.reach ? '  USERS'.padStart(9) : ''}
           {cols.version ? '  VERSION'.padStart(10) : ''}
           {cols.rating ? '  RATING'.padStart(12) : ''}
@@ -255,19 +259,22 @@ function Header({
  * Only what the frame can actually show. A legend for a column the terminal dropped is
  * one more thing to read and nothing to look at.
  */
-function legend(cols: Columns): string {
-  const parts = [`${MARKERS.changed} changed`, `${MARKERS.stale} stale`, '"new" means no baseline']
-  if (cols.src) parts.push(`${SOURCE_HEADER} stores`)
-  if (cols.reach) parts.push('~ rounded bucket')
-  parts.push(`${DRIFT.versions} stores differ`, `${DRIFT.unreleased} unreleased`)
-  return parts.join('   ')
+function legend(): string {
+  return [
+    `${MARKERS.changed} changed`,
+    `${MARKERS.stale} stale`,
+    `${DRIFT.versions} stores differ`,
+    `${DRIFT.unreleased} unreleased`,
+    '? explains the rest',
+  ].join('   ')
 }
 
+/** The keys worth naming on one line. The rest live behind "?" and stay there. */
 function keys(view: View): string {
-  const parts = ['j/k move', 'enter detail', 'o open', '/ filter', 'e store', 's sort']
+  const parts = ['j/k move', '/ filter', 'e store', 's sort']
   parts.push(view.scope === 'all' ? 'r refresh' : `r refresh ${view.scope}`)
   if (view.query || view.scope !== 'all' || view.sort !== 'default') parts.push('c clear')
-  return ` ${parts.join('   ')}   q quit`
+  return ` ${parts.join('   ')}   ? keys   q quit`
 }
 
 export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promise<void> }) {
@@ -278,7 +285,7 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
 
   const [all, setAll] = useState<Project[]>(() => buildProjects())
   const [cursor, setCursor] = useState(0)
-  const [pane, setPane] = useState<'list' | 'detail' | 'item'>('list')
+  const [pane, setPane] = useState<'list' | 'detail' | 'item' | 'help'>('list')
   const [view, setView] = useState<View>(DEFAULT_VIEW)
   const [typing, setTyping] = useState<string | null>(null)
   const [detailCursor, setDetailCursor] = useState(0)
@@ -350,12 +357,25 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
       return
     }
 
+    // Anything but a scroll leaves, because a reader who lands here by accident should
+    // not have to read the page to find the way out.
+    if (pane === 'help') {
+      if (input === 'j' || key.downArrow) return setScroll((s) => s + 1)
+      if (input === 'k' || key.upArrow) return setScroll((s) => Math.max(s - 1, 0))
+      return setPane('list')
+    }
+
     if (input === 'q' || key.escape) {
       if (pane === 'item') return setPane('detail')
       if (pane === 'detail') return setPane('list')
       return exit()
     }
     if (busy) return
+
+    if (input === '?') {
+      setScroll(0)
+      return setPane('help')
+    }
 
     const down = input === 'j' || key.downArrow
     const up = input === 'k' || key.upArrow
@@ -423,6 +443,7 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
     )
   }
 
+  if (pane === 'help') return <Help offset={scroll} width={width} rows={rows} />
   if (pane === 'item' && item) return <Item item={item} offset={scroll} width={width} rows={rows} />
   if (pane === 'detail' && selected) {
     return (
@@ -440,7 +461,14 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
 
   return (
     <Box flexDirection="column">
-      <Header projects={projects} total={all.length} view={view} width={width} cols={cols} />
+      <Header
+        projects={projects}
+        total={all.length}
+        view={view}
+        baselineAt={selected?.downloads?.baselineAt}
+        width={width}
+        cols={cols}
+      />
       {projects.length === 0 ? (
         <Text color={theme.muted}>
           {`  nothing matches. c clears the filter, ${all.length} projects are in the store.`}
@@ -457,16 +485,13 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
       ))}
       <Box marginTop={1} width={width}>
         <Text color={theme.muted} wrap="truncate-end">
-          {busy ? `${busy}...` : legend(cols)}
+          {busy ? `${busy}...` : legend()}
         </Text>
       </Box>
       <Box width={width}>
         {typing === null ? (
           <Text color={theme.muted} wrap="truncate-end">
             {keys(view)}
-            {selected?.downloads?.baselineAt
-              ? `   deltas${since(selected.downloads.baselineAt)}`
-              : ''}
           </Text>
         ) : (
           <Text wrap="truncate-end">
