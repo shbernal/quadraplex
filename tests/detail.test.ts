@@ -33,6 +33,7 @@ function project(targets: Target[]): Project {
     stars: null,
     reach: null,
     rating: null,
+    drift: { version: null, versions: null, unreleased: null },
   }
 }
 

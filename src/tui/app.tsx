@@ -13,7 +13,7 @@ import {
 } from './model.ts'
 import { Sparkline } from './sparkline.tsx'
 import { Detail, Item } from './detail.tsx'
-import { MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
+import { DRIFT, MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
 
 /**
  * Columns are allocated in priority order against the width the terminal actually has,
@@ -23,34 +23,40 @@ import { MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
  */
 function layout(width: number, projects: Project[]) {
   const name = Math.max(12, Math.min(28, Math.floor(width * 0.28)))
-  let left = width - 3 - name - 7 - 8
+  const sparkWidth = Math.min(16, Math.floor(width / 6))
+  const any = (has: (project: Project) => unknown) => projects.some((p) => Boolean(has(p)))
+  let left = width - 4 - name - 7 - 8
   const take = (cost: number, wanted = true) => {
     if (!wanted || left < cost) return false
     left -= cost
     return true
   }
-  const sparkWidth = Math.min(16, Math.floor(width / 6))
+
   return {
     name,
     delta: true,
     src: take(SOURCE_SLOTS.length + 1),
     stars: take(
       15,
-      projects.some((p) => p.stars),
+      any((p) => p.stars),
     ),
     spark: take(
       sparkWidth + 2,
-      projects.some((p) => p.series.length > 0),
+      any((p) => p.series.length),
     )
       ? sparkWidth
       : 0,
     reach: take(
       9,
-      projects.some((p) => p.reach),
+      any((p) => p.reach),
+    ),
+    version: take(
+      10,
+      any((p) => p.drift.version ?? p.drift.versions),
     ),
     rating: take(
       12,
-      projects.some((p) => p.rating),
+      any((p) => p.rating),
     ),
     age: take(10),
   }
@@ -71,6 +77,22 @@ function open(url: string): void {
 }
 
 /** A bucket is marked so nobody reads Google's rounded label as a count. */
+/** Version drift is the worse news of the two, so it wins the one glyph available. */
+function driftMarker(project: Project): string {
+  if (project.drift.versions) return DRIFT.versions
+  if (project.drift.unreleased) return DRIFT.unreleased
+  return DRIFT.none
+}
+
+/**
+ * Two stores disagreeing have no single version to print, and printing either one is
+ * how a reader concludes the other shipped too. The detail pane names both.
+ */
+function versionCell(project: Project): string {
+  if (project.drift.versions) return 'differs'
+  return project.drift.version ?? ''
+}
+
 function reachCell(project: Project): string {
   const reach = project.reach
   // Blank, not a dash. A package has no user count to be missing, and 23 dashes down a
@@ -98,6 +120,7 @@ function Row({
   cols: Columns
 }) {
   const marker = project.changed ? MARKERS.changed : project.stale ? MARKERS.stale : MARKERS.quiet
+  const drift = driftMarker(project)
   const downloads = project.downloads
   const stars = project.stars
   const newest = project.targets.reduce(
@@ -109,7 +132,10 @@ function Row({
     <Box width={width}>
       <Text color={selected ? theme.accent : undefined} inverse={selected}>
         {' '}
-        {marker}{' '}
+        {marker}
+      </Text>
+      <Text color={drift === DRIFT.none ? undefined : theme.warn} inverse={selected}>
+        {drift}{' '}
       </Text>
       <Text bold={selected}>{project.name.slice(0, cols.name).padEnd(cols.name)}</Text>
       {cols.src ? <Text color={theme.muted}>{` ${sources(project)}`}</Text> : null}
@@ -140,6 +166,11 @@ function Row({
         </Box>
       ) : null}
       {cols.reach ? <Text>{`  ${reachCell(project)}`.padStart(9)}</Text> : null}
+      {cols.version ? (
+        <Text color={project.drift.versions ? theme.warn : theme.muted}>
+          {`  ${versionCell(project)}`.padStart(10)}
+        </Text>
+      ) : null}
       {cols.rating ? (
         <Text color={theme.muted}>{`  ${ratingCell(project)}`.padStart(12)}</Text>
       ) : null}
@@ -172,7 +203,7 @@ function Header({ projects, width, cols }: { projects: Project[]; width: number;
       </Box>
       <Box width={width}>
         <Text color={theme.muted} wrap="truncate-end">
-          {'   '}
+          {'    '}
           {'PROJECT'.padEnd(cols.name)}
           {cols.src ? ` ${SOURCE_HEADER}` : ''}
           {'WEEK'.padStart(7)}
@@ -180,6 +211,7 @@ function Header({ projects, width, cols }: { projects: Project[]; width: number;
           {cols.stars ? `   ${'STARS'.padStart(6)} ${'+/-'.padStart(5)}` : ''}
           {cols.spark ? ' '.repeat(cols.spark + 2) : ''}
           {cols.reach ? '  USERS'.padStart(9) : ''}
+          {cols.version ? '  VERSION'.padStart(10) : ''}
           {cols.rating ? '  RATING'.padStart(12) : ''}
         </Text>
       </Box>
@@ -195,6 +227,7 @@ function legend(cols: Columns): string {
   const parts = [`${MARKERS.changed} changed`, `${MARKERS.stale} stale`, '"new" means no baseline']
   if (cols.src) parts.push(`${SOURCE_HEADER} stores`)
   if (cols.reach) parts.push('~ rounded bucket')
+  parts.push(`${DRIFT.versions} stores differ`, `${DRIFT.unreleased} unreleased`)
   return parts.join('   ')
 }
 

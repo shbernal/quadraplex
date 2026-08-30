@@ -23,6 +23,13 @@ export function since(iso: string | undefined): string {
   return iso ? ` since ${formatDate(iso)}` : ''
 }
 
+/** How much later one moment is than another, in the units relativeAge already uses. */
+export function span(fromIso: string, toIso: string): string {
+  const hours = Math.round((Date.parse(toIso) - Date.parse(fromIso)) / 3_600_000)
+  if (hours < 48) return `${hours}h`
+  return `${Math.round(hours / 24)}d`
+}
+
 export function relativeAge(iso: string): string {
   const ms = Date.now() - Date.parse(iso)
   const minutes = Math.round(ms / 60_000)

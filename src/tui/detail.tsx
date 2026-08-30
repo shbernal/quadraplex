@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Box, Text } from 'ink'
-import { formatDelta, relativeAge, since } from '../core/format.ts'
+import type { Drift } from '../core/drift.ts'
+import { formatDelta, relativeAge, since, span } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import type { Target } from '../core/types.ts'
 import type { Project, Stargazers } from './model.ts'
@@ -44,6 +45,40 @@ function heading(key: string, text: string, note?: string): Line {
       </Text>
     ),
   }
+}
+
+/**
+ * Named in words at the top of the pane, because the marker in the list only says that
+ * something is off. Which store is behind, and by how long, is the actionable part.
+ */
+function driftLines(drift: Drift): Line[] {
+  const lines: Line[] = []
+  if (drift.versions) {
+    lines.push({
+      key: 'drift:versions',
+      node: (
+        <Text color={theme.warn} wrap="truncate-end">
+          {'stores differ         '}
+          {drift.versions.map((entry) => `${entry.ecosystem} ${entry.version}`).join('   ')}
+        </Text>
+      ),
+    })
+  }
+  if (drift.unreleased) {
+    const { pushedAt, publishedAt } = drift.unreleased
+    lines.push({
+      key: 'drift:unreleased',
+      node: (
+        <Text color={theme.warn} wrap="truncate-end">
+          {'unreleased            pushed '}
+          {span(publishedAt, pushedAt)}
+          {' after the last publish'}
+        </Text>
+      ),
+    })
+  }
+  if (lines.length > 0) lines.push(blank('drift:gap'))
+  return lines
 }
 
 function targetLines(target: Target, focus: number, selected: boolean): Line[] {
@@ -199,10 +234,10 @@ export function Detail({
   width: number
   rows: number
 }) {
-  const lines: Line[] = []
+  const lines: Line[] = driftLines(project.drift)
   let focus = 0
   for (const target of project.targets) {
-    if (lines.length > 0) lines.push(blank(`gap:${target.id}`))
+    if (focus > 0) lines.push(blank(`gap:${target.id}`))
     lines.push(...targetLines(target, focus, focus === cursor))
     focus += 1
   }

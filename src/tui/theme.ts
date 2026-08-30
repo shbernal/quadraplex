@@ -15,6 +15,9 @@ export const theme = {
 
 export const MARKERS = { changed: '*', stale: '!', quiet: ' ' }
 
+/** A second glyph in the same cell, because a row can have moved and drifted at once. */
+export const DRIFT = { versions: 'v', unreleased: '^', none: ' ' }
+
 /**
  * A fixed slot per ecosystem, so a project's stores read off one column at a glance and
  * the header doubles as the legend: "npGAC" spells the slots out in order.

@@ -1,4 +1,5 @@
 import { loadConfig } from '../core/config.ts'
+import { computeDrift, type Drift } from '../core/drift.ts'
 import { compactNumber } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import { loadState, readCurve, readDetail, readSeries } from '../core/store.ts'
@@ -35,6 +36,7 @@ export type Project = {
   /** Extension reach, from the Chrome bucket when there is one and Firefox otherwise. */
   reach: Reach | null
   rating: Rating | null
+  drift: Drift
 }
 
 /**
@@ -178,6 +180,7 @@ export function buildProjects(): Project[] {
       stars: metric(repos, HEADLINE_METRIC.github),
       reach: reach(ordered),
       rating: rating(ordered),
+      drift: computeDrift(ordered),
     }
   })
 
