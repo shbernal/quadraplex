@@ -14,7 +14,10 @@ Laboratory_. It reports on the facility. It does not run it.
 - **A dashboard that opens instantly.** The TUI reads the local store and never fetches,
   so it works offline and never stalls on a slow registry.
 - **One row per project.** A package and its repo are the same thing to you, so downloads
-  and stars share a line.
+  and stars share a line, and a fixed slot per store says where a project is published.
+- **Drift between stores.** When Chrome is on 1.4.0 and Firefox is on 1.4.1, the row says
+  so, and a default branch pushed long after the last release shows as unreleased work.
+  Both readings come out of the store, so neither costs a request.
 - **A JSON surface built for agents.** A cached snapshot answers most questions with no
   network at all, and only targeted lookups are allowed to refetch.
 
@@ -52,8 +55,9 @@ Config lives at `~/.local/share/quadraplex/config.json` and every key is optiona
 Archived repos and forks are left out of every view by default, since neither is something
 you publish. Set either key to `true` to count them again.
 
-In the dashboard, `r` refreshes, `o` opens the selected project in a browser, `enter`
-opens a detail view, and `q` quits.
+In the dashboard, `/` filters, `e` scopes the list to one store, `s` cycles the sort and
+`c` clears all three. `enter` opens a project, `o` opens the thing under the cursor in a
+browser, `r` refreshes whatever is scoped, and `?` lists every key. `q` quits.
 
 ## For agents
 

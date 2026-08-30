@@ -118,6 +118,24 @@ apart, and would print a three-week jump exactly like a daily one.
 - A metric missing from the baseline gets a `null` entry rather than its own value, so a
   newly added metric does not appear as a spike.
 
+## Drift
+
+Two readings a single store cannot give you, both derived from metrics already on disk,
+so neither costs a request. They live in `src/core/drift.ts` and are computed per project,
+not per target, because that is the level at which the comparison exists at all.
+
+- **Stores disagree.** Chrome on 1.4.0 while Firefox is on 1.4.1 means one review queue
+  was never followed up. Versions are compared across ecosystems only. An ecosystem whose
+  own targets disagree contributes none, so a monorepo publishing packages on their own
+  cadence is never reported as a defect.
+- **Unreleased work.** A default branch pushed more than 24h after the newest
+  `lastPublish`. The window matches the default delta window, and the shape of the data
+  justifies it: real gaps are either under twenty minutes, which is the release commit
+  landing, or over a week.
+
+Neither reading reaches `state.json` or the JSON payloads. They are cheap enough to derive
+at read time and would otherwise need a `schemaVersion` bump to change.
+
 ## Staleness
 
 `stale` is computed from `fetchedAt` plus a per-ecosystem TTL, never guessed and never
