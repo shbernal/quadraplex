@@ -290,6 +290,11 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
   const [typing, setTyping] = useState<string | null>(null)
   const [detailCursor, setDetailCursor] = useState(0)
   const [scroll, setScroll] = useState(0)
+  // Its own scroll and its own way back, so reading the keys never costs the reader the
+  // place they were reading from.
+  const [help, setHelp] = useState<{ from: 'list' | 'detail' | 'item'; scroll: number } | null>(
+    null,
+  )
   const [busy, setBusy] = useState<string | null>(null)
 
   const projects = useMemo(() => applyView(all, view), [all, view])
@@ -359,10 +364,13 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
 
     // Anything but a scroll leaves, because a reader who lands here by accident should
     // not have to read the page to find the way out.
-    if (pane === 'help') {
-      if (input === 'j' || key.downArrow) return setScroll((s) => s + 1)
-      if (input === 'k' || key.upArrow) return setScroll((s) => Math.max(s - 1, 0))
-      return setPane('list')
+    if (pane === 'help' && help) {
+      if (input === 'j' || key.downArrow) return setHelp({ ...help, scroll: help.scroll + 1 })
+      if (input === 'k' || key.upArrow) {
+        return setHelp({ ...help, scroll: Math.max(help.scroll - 1, 0) })
+      }
+      setPane(help.from)
+      return setHelp(null)
     }
 
     if (input === 'q' || key.escape) {
@@ -372,8 +380,8 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
     }
     if (busy) return
 
-    if (input === '?') {
-      setScroll(0)
+    if (input === '?' && pane !== 'help') {
+      setHelp({ from: pane, scroll: 0 })
       return setPane('help')
     }
 
@@ -443,7 +451,7 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
     )
   }
 
-  if (pane === 'help') return <Help offset={scroll} width={width} rows={rows} />
+  if (pane === 'help' && help) return <Help offset={help.scroll} width={width} rows={rows} />
   if (pane === 'item' && item) return <Item item={item} offset={scroll} width={width} rows={rows} />
   if (pane === 'detail' && selected) {
     return (
