@@ -13,17 +13,56 @@ import {
 } from './model.ts'
 import { Sparkline } from './sparkline.tsx'
 import { Detail, Item } from './detail.tsx'
-import { MARKERS, theme } from './theme.ts'
+import { MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
 
-/** Columns drop by priority as the terminal narrows. Deltas are the last thing to go. */
-function layout(width: number) {
-  return {
-    age: width >= 96,
-    spark: width >= 78 ? Math.min(16, Math.floor(width / 6)) : 0,
-    stars: width >= 62,
-    delta: true,
-    name: Math.max(12, Math.min(28, Math.floor(width * 0.28))),
+/**
+ * Columns are allocated in priority order against the width the terminal actually has,
+ * so a narrow one drops whole columns rather than shaving every one of them into noise.
+ * A column nothing in the portfolio can fill is never allocated at all: a pure npm
+ * account never pays six characters for an empty ratings column.
+ */
+function layout(width: number, projects: Project[]) {
+  const name = Math.max(12, Math.min(28, Math.floor(width * 0.28)))
+  let left = width - 3 - name - 7 - 8
+  const take = (cost: number, wanted = true) => {
+    if (!wanted || left < cost) return false
+    left -= cost
+    return true
   }
+  const sparkWidth = Math.min(16, Math.floor(width / 6))
+  return {
+    name,
+    delta: true,
+    src: take(SOURCE_SLOTS.length + 1),
+    stars: take(
+      15,
+      projects.some((p) => p.stars),
+    ),
+    spark: take(
+      sparkWidth + 2,
+      projects.some((p) => p.series.length > 0),
+    )
+      ? sparkWidth
+      : 0,
+    reach: take(
+      9,
+      projects.some((p) => p.reach),
+    ),
+    rating: take(
+      12,
+      projects.some((p) => p.rating),
+    ),
+    age: take(10),
+  }
+}
+
+type Columns = ReturnType<typeof layout>
+
+/** Which stores a project is on, one fixed slot each so the column reads vertically. */
+function sources(project: Project): string {
+  return SOURCE_SLOTS.map((slot) =>
+    project.targets.some((t) => t.ecosystem === slot.ecosystem) ? slot.letter : ' ',
+  ).join('')
 }
 
 function open(url: string): void {
@@ -31,8 +70,33 @@ function open(url: string): void {
   spawn(command, [url], { detached: true, stdio: 'ignore' }).unref()
 }
 
-function Row({ project, selected, width }: { project: Project; selected: boolean; width: number }) {
-  const cols = layout(width)
+/** A bucket is marked so nobody reads Google's rounded label as a count. */
+function reachCell(project: Project): string {
+  const reach = project.reach
+  // Blank, not a dash. A package has no user count to be missing, and 23 dashes down a
+  // column of npm rows reads as 23 failures.
+  if (!reach) return ''
+  return reach.bucket ? `${reach.label}~` : reach.label
+}
+
+function ratingCell(project: Project): string {
+  const rating = project.rating
+  if (!rating) return ''
+  const letter = SOURCE_SLOTS.find((slot) => slot.ecosystem === rating.source)?.letter ?? '?'
+  return `${letter} ${rating.score} (${rating.count})`
+}
+
+function Row({
+  project,
+  selected,
+  width,
+  cols,
+}: {
+  project: Project
+  selected: boolean
+  width: number
+  cols: Columns
+}) {
   const marker = project.changed ? MARKERS.changed : project.stale ? MARKERS.stale : MARKERS.quiet
   const downloads = project.downloads
   const stars = project.stars
@@ -48,6 +112,7 @@ function Row({ project, selected, width }: { project: Project; selected: boolean
         {marker}{' '}
       </Text>
       <Text bold={selected}>{project.name.slice(0, cols.name).padEnd(cols.name)}</Text>
+      {cols.src ? <Text color={theme.muted}>{` ${sources(project)}`}</Text> : null}
       <Text>{(downloads ? compactNumber(downloads.value) : '-').padStart(7)}</Text>
       {cols.delta ? (
         <Text color={downloads?.delta ? theme.up : theme.muted}>
@@ -74,13 +139,16 @@ function Row({ project, selected, width }: { project: Project; selected: boolean
           />
         </Box>
       ) : null}
+      {cols.reach ? <Text>{`  ${reachCell(project)}`.padStart(9)}</Text> : null}
+      {cols.rating ? (
+        <Text color={theme.muted}>{`  ${ratingCell(project)}`.padStart(12)}</Text>
+      ) : null}
       {cols.age ? <Text color={theme.muted}>{`  ${relativeAge(newest)}`.padStart(10)}</Text> : null}
     </Box>
   )
 }
 
-function Header({ projects, width }: { projects: Project[]; width: number }) {
-  const cols = layout(width)
+function Header({ projects, width, cols }: { projects: Project[]; width: number; cols: Columns }) {
   const changed = projects.filter((p) => p.changed).length
   const targets = projects.reduce((total, p) => total + p.targets.length, 0)
   const newest = projects
@@ -106,13 +174,28 @@ function Header({ projects, width }: { projects: Project[]; width: number }) {
         <Text color={theme.muted} wrap="truncate-end">
           {'   '}
           {'PROJECT'.padEnd(cols.name)}
+          {cols.src ? ` ${SOURCE_HEADER}` : ''}
           {'WEEK'.padStart(7)}
           {cols.delta ? ` ${'DELTA'.padStart(7)}` : ''}
           {cols.stars ? `   ${'STARS'.padStart(6)} ${'+/-'.padStart(5)}` : ''}
+          {cols.spark ? ' '.repeat(cols.spark + 2) : ''}
+          {cols.reach ? '  USERS'.padStart(9) : ''}
+          {cols.rating ? '  RATING'.padStart(12) : ''}
         </Text>
       </Box>
     </Box>
   )
+}
+
+/**
+ * Only what the frame can actually show. A legend for a column the terminal dropped is
+ * one more thing to read and nothing to look at.
+ */
+function legend(cols: Columns): string {
+  const parts = [`${MARKERS.changed} changed`, `${MARKERS.stale} stale`, '"new" means no baseline']
+  if (cols.src) parts.push(`${SOURCE_HEADER} stores`)
+  if (cols.reach) parts.push('~ rounded bucket')
+  return parts.join('   ')
 }
 
 export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
@@ -127,6 +210,8 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   const [detailCursor, setDetailCursor] = useState(0)
   const [scroll, setScroll] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
+
+  const cols = useMemo(() => layout(width, projects), [width, projects])
 
   // Clamped during render rather than corrected in an effect, so a refresh that shortens
   // the list never draws a frame with the cursor past the end.
@@ -238,20 +323,19 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
 
   return (
     <Box flexDirection="column">
-      <Header projects={projects} width={width} />
+      <Header projects={projects} width={width} cols={cols} />
       {window.map((project) => (
         <Row
           key={project.key}
           project={project}
           selected={project.key === selected?.key}
           width={width}
+          cols={cols}
         />
       ))}
       <Box marginTop={1} width={width}>
         <Text color={theme.muted} wrap="truncate-end">
-          {busy
-            ? `${busy}...`
-            : `${MARKERS.changed} changed   ${MARKERS.stale} stale   "new" means no baseline yet`}
+          {busy ? `${busy}...` : legend(cols)}
         </Text>
       </Box>
       <Box width={width}>

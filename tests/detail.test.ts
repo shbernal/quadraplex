@@ -31,6 +31,8 @@ function project(targets: Target[]): Project {
     series: [],
     downloads: null,
     stars: null,
+    reach: null,
+    rating: null,
   }
 }
 

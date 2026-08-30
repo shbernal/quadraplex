@@ -14,3 +14,17 @@ export const theme = {
 }
 
 export const MARKERS = { changed: '*', stale: '!', quiet: ' ' }
+
+/**
+ * A fixed slot per ecosystem, so a project's stores read off one column at a glance and
+ * the header doubles as the legend: "npGAC" spells the slots out in order.
+ */
+export const SOURCE_SLOTS = [
+  { ecosystem: 'npm', letter: 'n' },
+  { ecosystem: 'pypi', letter: 'p' },
+  { ecosystem: 'github', letter: 'G' },
+  { ecosystem: 'amo', letter: 'A' },
+  { ecosystem: 'cws', letter: 'C' },
+] as const
+
+export const SOURCE_HEADER = SOURCE_SLOTS.map((slot) => slot.letter).join('')

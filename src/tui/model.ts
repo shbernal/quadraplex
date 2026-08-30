@@ -1,4 +1,5 @@
 import { loadConfig } from '../core/config.ts'
+import { compactNumber } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import { loadState, readCurve, readDetail, readSeries } from '../core/store.ts'
 import {
@@ -11,6 +12,16 @@ import {
 
 export type Metric = { value: number; delta: number | null; baselineAt?: string }
 
+/**
+ * One store's reading of a user count, never summed with another's. A Chrome install
+ * bucket and a Firefox daily-user count do not share a unit, so the row shows one reading
+ * and names the store it came from. The detail pane lists every store.
+ */
+export type Reach = { label: string; source: Ecosystem; bucket: boolean; delta: number | null }
+
+/** A score and the number of ratings behind it, from whichever store has the most. */
+export type Rating = { score: number; count: number; source: Ecosystem }
+
 export type Project = {
   key: string
   name: string
@@ -21,6 +32,9 @@ export type Project = {
   series: SeriesPoint[]
   downloads: Metric | null
   stars: Metric | null
+  /** Extension reach, from the Chrome bucket when there is one and Firefox otherwise. */
+  reach: Reach | null
+  rating: Rating | null
 }
 
 /**
@@ -77,6 +91,42 @@ function metric(targets: Target[], key: string): Metric | null {
   return out
 }
 
+/**
+ * Chrome first because an install bucket is the wider reading and Google publishes
+ * nothing finer, then Firefox daily users. The badge in the same row already says which
+ * stores a project is on, so naming the source here costs one letter and no ambiguity.
+ */
+function reach(targets: Target[]): Reach | null {
+  const chrome = targets.find((t) => t.ecosystem === 'cws' && typeof t.metrics.users === 'string')
+  // Google's label is kept verbatim. Reformatting "1,000" as a number would be the first
+  // step towards subtracting two of them, which measures the bucket boundary moving.
+  if (chrome) {
+    return { label: chrome.metrics.users as string, source: 'cws', bucket: true, delta: null }
+  }
+  const firefox = targets.find((t) => t.ecosystem === 'amo' && typeof t.metrics.users === 'number')
+  if (!firefox) return null
+  return {
+    label: compactNumber(firefox.metrics.users as number),
+    source: 'amo',
+    bucket: false,
+    delta: firefox.deltas ? (firefox.deltas.users ?? null) : null,
+  }
+}
+
+/** The best evidenced score wins, because an average over one rating is not a score. */
+function rating(targets: Target[]): Rating | null {
+  const rated = targets
+    .filter((t) => typeof t.metrics.rating === 'number' && typeof t.metrics.ratings === 'number')
+    .toSorted((a, b) => (b.metrics.ratings as number) - (a.metrics.ratings as number))
+  const best = rated[0]
+  if (!best || (best.metrics.ratings as number) === 0) return null
+  return {
+    score: best.metrics.rating as number,
+    count: best.metrics.ratings as number,
+    source: best.ecosystem,
+  }
+}
+
 /** Element-wise sum by date, so a multi-package project gets one honest trace. */
 function mergeSeries(all: SeriesPoint[][]): SeriesPoint[] {
   if (all.length <= 1) return all[0] ?? []
@@ -126,6 +176,8 @@ export function buildProjects(): Project[] {
       series: mergeSeries(distributions.map((t) => readSeries(t.id))),
       downloads: metric(distributions, HEADLINE_METRIC.npm),
       stars: metric(repos, HEADLINE_METRIC.github),
+      reach: reach(ordered),
+      rating: rating(ordered),
     }
   })
 
