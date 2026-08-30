@@ -13,8 +13,10 @@ Laboratory_. It reports on the facility. It does not run it.
   you read "+120 downloads since Aug 19" instead of a total you have to remember.
 - **A dashboard that opens instantly.** The TUI reads the local store and never fetches,
   so it works offline and never stalls on a slow registry.
-- **One row per project.** A package and its repo are the same thing to you, so downloads
-  and stars share a line, and a fixed slot per store says where a project is published.
+- **One row per project, in one of two tables.** A package and its repo are the same thing
+  to you, so downloads and stars share a line, and a fixed slot per store says where a
+  project is published. Packages and web extensions are measured by different things, so
+  each gets its own table and its own columns under one shared grid.
 - **Drift between stores.** When Chrome is on 1.4.0 and Firefox is on 1.4.1, the row says
   so, and a default branch pushed long after the last release shows as unreleased work.
   Both readings come out of the store, so neither costs a request.

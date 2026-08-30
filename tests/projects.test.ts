@@ -113,15 +113,33 @@ test('a scope keeps a project when any of its targets is in that ecosystem', () 
   expect(applyView(all, { ...DEFAULT_VIEW, scope: 'pypi' })).toHaveLength(0)
 })
 
-test('sorting by drift leads with the stores that disagree, not with what merely moved', () => {
+test('sorting orders rows inside each table, and never mixes the two together', () => {
   store([
     snap('npm:quiet', 'npm', { downloadsWeek: 900, version: '1.0.0' }),
+    snap('amo:calm', 'amo', { users: 9, version: '1.0.0' }),
     snap('amo:split', 'amo', { users: 1, version: '2.0.0' }, [
       'cws:abcdefghijklmnopabcdefghijklmnop',
     ]),
     snap('cws:abcdefghijklmnopabcdefghijklmnop', 'cws', { version: '1.9.0' }, ['amo:split']),
   ])
   const sorted = applyView(buildProjects(), { ...DEFAULT_VIEW, sort: 'drift' })
-  expect(sorted[0]!.drift.versions).not.toBeNull()
+  expect(sorted.map((p) => p.kind)).toEqual(['package', 'extension', 'extension'])
+  // The disagreement leads the extensions, which is as far up as a listing can go.
+  expect(sorted[1]!.drift.versions).not.toBeNull()
   expect(applyView(buildProjects(), { ...DEFAULT_VIEW, sort: 'downloads' })[0]!.name).toBe('quiet')
+})
+
+test('a store listing files a project under extensions even when it also ships a package', () => {
+  store([
+    snap('npm:widget', 'npm', { downloadsWeek: 5 }, ['gh:owner/widget']),
+    snap('gh:owner/widget', 'github', { stars: 2 }),
+    snap('cws:abcdefghijklmnopabcdefghijklmnop', 'cws', { users: '1,000', title: 'Blocker' }, [
+      'npm:widget',
+      'gh:owner/widget',
+    ]),
+    snap('npm:plain', 'npm', { downloadsWeek: 1 }),
+  ])
+  const kinds = new Map(buildProjects().map((p) => [p.name, p.kind]))
+  expect(kinds.get('widget')).toBe('extension')
+  expect(kinds.get('plain')).toBe('package')
 })

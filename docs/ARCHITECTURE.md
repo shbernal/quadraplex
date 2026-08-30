@@ -162,6 +162,21 @@ in `links`, and overridable in config. A Chrome Web Store listing publishes no r
 field at all, so a `cws:` target is linked from config or not at all. Only the TUI consumes it, but retrofitting an identity concept onto
 a store that already has history is painful, so it is in from the start.
 
+## The dashboard's two tables
+
+A registry and an extension store answer different questions, so the list is two tables
+rather than one with half its cells blank. A project holding a `cws:` or `amo:` listing is
+an extension and reports users, their delta and a rating; everything else is a package and
+reports a week of downloads, its delta and ninety days of trace. GitHub reads the same for
+both, so stars, version and freshness stay in shared columns, and the two metric blocks are
+allocated one width so those shared columns land on the same characters in both tables.
+
+Filtering and sorting run before the split, so a sort reorders rows inside a table instead
+of shuffling the two together, and the cursor moves in the order the screen draws.
+
+Deltas are coloured by sign: green rose, red fell, grey held or is unknown. Every delta
+carries its own sign, so `NO_COLOR` loses the colour and none of the reading.
+
 ## Config
 
 Every key is optional and the tool works with no config at all.

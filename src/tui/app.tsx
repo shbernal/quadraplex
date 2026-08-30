@@ -13,56 +13,69 @@ import {
   projectStargazers,
   SCOPES,
   SORTS,
+  type Kind,
   type Project,
+  type Reach,
+  type Rating,
   type View,
 } from './model.ts'
 import { Sparkline } from './sparkline.tsx'
 import { Detail, Item } from './detail.tsx'
 import { Help } from './help.tsx'
-import { DRIFT, MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
+import { deltaColor, DRIFT, MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
+
+/** The headline number, its delta and the rating: the cells whose widths both tables share. */
+const VALUE = 7
+const DELTA = 8
+const RATING = 12
+
+const any = (projects: Project[], has: (project: Project) => unknown) =>
+  projects.some((project) => Boolean(has(project)))
 
 /**
- * Columns are allocated in priority order against the width the terminal actually has,
- * so a narrow one drops whole columns rather than shaving every one of them into noise.
- * A column nothing in the portfolio can fill is never allocated at all: a pure npm
- * account never pays six characters for an empty ratings column.
+ * Two tables, one grid. A package reports downloads and a trace, an extension reports
+ * users and a rating, so each gets its own block of metric columns, and the block is one
+ * width for both so the GitHub columns they share stay on the same characters down the
+ * whole screen. Columns are allocated in priority order against the width the terminal
+ * actually has, so a narrow one drops whole columns rather than shaving every one of them
+ * into noise, and a column nothing on screen can fill is never allocated at all.
  */
 function layout(width: number, projects: Project[]) {
+  const packages = projects.filter((p) => p.kind === 'package')
+  const extensions = projects.filter((p) => p.kind === 'extension')
   const name = Math.max(12, Math.min(28, Math.floor(width * 0.28)))
   const sparkWidth = Math.min(16, Math.floor(width / 6))
-  const any = (has: (project: Project) => unknown) => projects.some((p) => Boolean(has(p)))
-  let left = width - 4 - name - 7 - 8
+  let left = width - 4 - name
   const take = (cost: number, wanted = true) => {
     if (!wanted || left < cost) return false
     left -= cost
     return true
   }
 
+  const src = take(SOURCE_SLOTS.length + 1)
+  const value = take(VALUE + DELTA)
+  const stars = take(
+    15,
+    any(projects, (p) => p.stars),
+  )
+  // The trace and the rating never appear on the same row, so they are the same slot,
+  // wide enough for whichever of the two is on screen.
+  const wantSpark = value && any(packages, (p) => p.series.length)
+  const wantRating = value && any(extensions, (p) => p.rating)
+  const blockWidth = Math.max(wantSpark ? sparkWidth + 2 : 0, wantRating ? RATING : 0)
+  const block = take(blockWidth, blockWidth > 0) ? blockWidth : 0
+
   return {
     name,
-    delta: true,
-    src: take(SOURCE_SLOTS.length + 1),
-    stars: take(
-      15,
-      any((p) => p.stars),
-    ),
-    spark: take(
-      sparkWidth + 2,
-      any((p) => p.series.length),
-    )
-      ? sparkWidth
-      : 0,
-    reach: take(
-      9,
-      any((p) => p.reach),
-    ),
+    value,
+    src,
+    stars,
+    block,
+    spark: block && wantSpark ? sparkWidth : 0,
+    rating: Boolean(block && wantRating),
     version: take(
       10,
-      any((p) => p.drift.version ?? p.drift.versions),
-    ),
-    rating: take(
-      12,
-      any((p) => p.rating),
+      any(projects, (p) => p.drift.version ?? p.drift.versions),
     ),
     age: take(10),
   }
@@ -99,19 +112,64 @@ function versionCell(project: Project): string {
   return project.drift.version ?? ''
 }
 
-function reachCell(project: Project): string {
-  const reach = project.reach
-  // Blank, not a dash. A package has no user count to be missing, and 23 dashes down a
-  // column of npm rows reads as 23 failures.
+function reachCell(reach: Reach | null): string {
+  // Blank, not a dash. A listing with no published count has nothing to be missing, and a
+  // column of dashes reads as a column of failures.
   if (!reach) return ''
   return reach.bucket ? `${reach.label}~` : reach.label
 }
 
-function ratingCell(project: Project): string {
-  const rating = project.rating
+function ratingCell(rating: Rating | null): string {
   if (!rating) return ''
   const letter = SOURCE_SLOTS.find((slot) => slot.ecosystem === rating.source)?.letter ?? '?'
   return `${letter} ${rating.score} (${rating.count})`
+}
+
+/** What a package is measured by: a week of downloads, its delta and ninety days of trace. */
+function PackageCells({ project, cols }: { project: Project; cols: Columns }) {
+  const downloads = project.downloads
+  return (
+    <>
+      <Text>{(downloads ? compactNumber(downloads.value) : '-').padStart(VALUE)}</Text>
+      <Text color={deltaColor(downloads?.delta)}>
+        {(downloads ? formatDelta(downloads.delta) : '').padStart(DELTA)}
+      </Text>
+      {cols.block ? (
+        <Box width={cols.block} flexShrink={0}>
+          {cols.spark ? (
+            <Box marginLeft={2}>
+              <Sparkline
+                values={project.series.map((point) => point.downloads)}
+                width={cols.spark}
+                color={theme.accent}
+              />
+            </Box>
+          ) : null}
+        </Box>
+      ) : null}
+    </>
+  )
+}
+
+/**
+ * What an extension is measured by. A Chrome bucket has no delta to show and never will:
+ * subtracting two rounded labels measures the boundary moving, not the extension.
+ */
+function ExtensionCells({ project, cols }: { project: Project; cols: Columns }) {
+  const reach = project.reach
+  return (
+    <>
+      <Text>{(reach ? reachCell(reach) : '-').padStart(VALUE)}</Text>
+      <Text color={deltaColor(reach?.delta)}>
+        {(reach && !reach.bucket ? formatDelta(reach.delta) : '').padStart(DELTA)}
+      </Text>
+      {cols.block ? (
+        <Box width={cols.block} flexShrink={0} justifyContent="flex-end">
+          <Text color={theme.muted}>{cols.rating ? ratingCell(project.rating) : ''}</Text>
+        </Box>
+      ) : null}
+    </>
+  )
 }
 
 function Row({
@@ -127,7 +185,6 @@ function Row({
 }) {
   const marker = project.changed ? MARKERS.changed : project.stale ? MARKERS.stale : MARKERS.quiet
   const drift = driftMarker(project)
-  const downloads = project.downloads
   const stars = project.stars
   const newest = project.targets.reduce(
     (latest, target) => (target.fetchedAt > latest ? target.fetchedAt : latest),
@@ -145,40 +202,27 @@ function Row({
       </Text>
       <Text bold={selected}>{project.name.slice(0, cols.name).padEnd(cols.name)}</Text>
       {cols.src ? <Text color={theme.muted}>{` ${sources(project)}`}</Text> : null}
-      <Text>{(downloads ? compactNumber(downloads.value) : '-').padStart(7)}</Text>
-      {cols.delta ? (
-        <Text color={downloads?.delta ? theme.up : theme.muted}>
-          {' '}
-          {(downloads ? formatDelta(downloads.delta) : '').padStart(7)}
-        </Text>
+      {cols.value ? (
+        project.kind === 'extension' ? (
+          <ExtensionCells project={project} cols={cols} />
+        ) : (
+          <PackageCells project={project} cols={cols} />
+        )
       ) : null}
       {cols.stars ? (
         <Text>
           {'   '}
           {(stars ? `${stars.value}` : '-').padStart(6)}
-          <Text color={stars?.delta ? theme.up : theme.muted}>
+          <Text color={deltaColor(stars?.delta)}>
             {' '}
             {(stars ? formatDelta(stars.delta) : '').padStart(5)}
           </Text>
         </Text>
       ) : null}
-      {cols.spark ? (
-        <Box marginLeft={2}>
-          <Sparkline
-            values={project.series.map((point) => point.downloads)}
-            width={cols.spark}
-            color={theme.accent}
-          />
-        </Box>
-      ) : null}
-      {cols.reach ? <Text>{`  ${reachCell(project)}`.padStart(9)}</Text> : null}
       {cols.version ? (
         <Text color={project.drift.versions ? theme.warn : theme.muted}>
           {`  ${versionCell(project)}`.padStart(10)}
         </Text>
-      ) : null}
-      {cols.rating ? (
-        <Text color={theme.muted}>{`  ${ratingCell(project)}`.padStart(12)}</Text>
       ) : null}
       {cols.age ? <Text color={theme.muted}>{`  ${relativeAge(newest)}`.padStart(10)}</Text> : null}
     </Box>
@@ -191,14 +235,12 @@ function Header({
   view,
   baselineAt,
   width,
-  cols,
 }: {
   projects: Project[]
   total: number
   view: View
   baselineAt: string | undefined
   width: number
-  cols: Columns
 }) {
   const changed = projects.filter((p) => p.changed).length
   const targets = projects.reduce((sum, p) => sum + p.targets.length, 0)
@@ -215,44 +257,74 @@ function Header({
   ].filter(Boolean)
 
   return (
-    <Box flexDirection="column" width={width}>
-      <Box width={width}>
-        <Box flexShrink={0}>
-          <Text color={theme.heading} bold>
-            {' QUADRAPLEX '}
-          </Text>
-        </Box>
-        {chips.length > 0 ? (
-          <Box flexShrink={0}>
-            <Text color={theme.warn}>{`${chips.join(' ')} `}</Text>
-          </Box>
-        ) : null}
-        <Box flexGrow={1} flexShrink={1} overflow="hidden">
-          <Text color={theme.muted} wrap="truncate-end">
-            {targets} targets in {filtered ? `${projects.length} of ${total}` : projects.length}
-            {' projects, '}
-            {changed} changed
-            {newest ? `, refreshed ${relativeAge(newest)}` : ''}
-            {baselineAt ? `, deltas${since(baselineAt)}` : ''}
-          </Text>
-        </Box>
+    <Box width={width}>
+      <Box flexShrink={0}>
+        <Text color={theme.heading} bold>
+          {' QUADRAPLEX '}
+        </Text>
       </Box>
-      <Box width={width}>
+      {chips.length > 0 ? (
+        <Box flexShrink={0}>
+          <Text color={theme.warn}>{`${chips.join(' ')} `}</Text>
+        </Box>
+      ) : null}
+      <Box flexGrow={1} flexShrink={1} overflow="hidden">
         <Text color={theme.muted} wrap="truncate-end">
-          {'    '}
-          {'PROJECT'.padEnd(cols.name)}
-          {cols.src ? ` ${SOURCE_HEADER}` : ''}
-          {'WEEK'.padStart(7)}
-          {cols.delta ? ` ${'DELTA'.padStart(7)}` : ''}
-          {cols.stars ? `   ${'STARS'.padStart(6)} ${'+/-'.padStart(5)}` : ''}
-          {cols.spark ? '90d'.padStart(cols.spark + 2) : ''}
-          {cols.reach ? '  USERS'.padStart(9) : ''}
-          {cols.version ? '  VERSION'.padStart(10) : ''}
-          {cols.rating ? '  RATING'.padStart(12) : ''}
+          {targets} targets in {filtered ? `${projects.length} of ${total}` : projects.length}
+          {' projects, '}
+          {changed} changed
+          {newest ? `, refreshed ${relativeAge(newest)}` : ''}
+          {baselineAt ? `, deltas${since(baselineAt)}` : ''}
         </Text>
       </Box>
     </Box>
   )
+}
+
+/**
+ * One table's column names, with the table's own name where PROJECT would go: the header
+ * row is also the divider that says which of the two tables starts here, and which unit
+ * the numbers below it are in.
+ */
+function columnHeader(kind: Kind, cols: Columns): string {
+  const pkg = kind === 'package'
+  return [
+    '    ',
+    (pkg ? 'PACKAGES' : 'EXTENSIONS').padEnd(cols.name).slice(0, cols.name),
+    cols.src ? ` ${SOURCE_HEADER}` : '',
+    cols.value ? (pkg ? 'WEEK' : 'USERS').padStart(VALUE) : '',
+    cols.value ? (pkg ? 'DELTA' : '+/-').padStart(DELTA) : '',
+    cols.block ? blockHeader(pkg, cols) : '',
+    cols.stars ? `   ${'STARS'.padStart(6)} ${'+/-'.padStart(5)}` : '',
+    cols.version ? '  VERSION'.padStart(10) : '',
+    cols.age ? '  FETCHED'.padStart(10) : '',
+  ].join('')
+}
+
+function blockHeader(pkg: boolean, cols: Columns): string {
+  if (!pkg) return (cols.rating ? 'RATING' : '').padStart(cols.block)
+  return (cols.spark ? '90d'.padStart(cols.spark + 2) : '').padEnd(cols.block)
+}
+
+/** A header row, a blank separator, or a project. What the list window slides over. */
+type ListLine = { key: string; section: Kind; project?: Project; header?: boolean }
+
+/**
+ * The two tables in one flow, so the window that scrolls the list scrolls the headers
+ * with it and the cursor keeps a single index into `projects`.
+ */
+function listLines(projects: Project[]): ListLine[] {
+  const lines: ListLine[] = []
+  let section: Kind | null = null
+  for (const project of projects) {
+    if (project.kind !== section) {
+      section = project.kind
+      if (lines.length > 0) lines.push({ key: `gap:${section}`, section })
+      lines.push({ key: `head:${section}`, section, header: true })
+    }
+    lines.push({ key: project.key, section, project })
+  }
+  return lines
 }
 
 /**
@@ -436,10 +508,24 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
     if (input === 'r') void runRefresh(view.scope)
   })
 
+  // One line more than the panes get, because the column names moved down into the body
+  // and the summary above it is a single line.
+  const listRows = rows + 1
   const window = useMemo(() => {
-    const start = Math.max(0, Math.min(index - Math.floor(rows / 2), projects.length - rows))
-    return projects.slice(start, start + rows)
-  }, [projects, index, rows])
+    const lines = listLines(projects)
+    const at = lines.findIndex((line) => line.project === selected)
+    const start = Math.max(
+      0,
+      Math.min(at < 0 ? 0 : at - Math.floor(listRows / 2), lines.length - listRows),
+    )
+    const visible = lines.slice(start, start + listRows)
+    // A window that scrolled past a header redraws it on its own first row. Two tables
+    // share this grid, and a column of numbers with nothing naming it is unreadable.
+    const first = visible[0]
+    if (first?.project)
+      visible[0] = { key: `head:${first.section}`, section: first.section, header: true }
+    return visible
+  }, [projects, selected, listRows])
 
   if (all.length === 0) {
     return (
@@ -475,22 +561,29 @@ export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promi
         view={view}
         baselineAt={selected?.downloads?.baselineAt}
         width={width}
-        cols={cols}
       />
       {projects.length === 0 ? (
         <Text color={theme.muted}>
           {`  nothing matches. c clears the filter, ${all.length} projects are in the store.`}
         </Text>
       ) : null}
-      {window.map((project) => (
-        <Row
-          key={project.key}
-          project={project}
-          selected={project.key === selected?.key}
-          width={width}
-          cols={cols}
-        />
-      ))}
+      {window.map((line) =>
+        line.header ? (
+          <Text key={line.key} color={theme.heading} wrap="truncate-end">
+            {columnHeader(line.section, cols)}
+          </Text>
+        ) : line.project ? (
+          <Row
+            key={line.key}
+            project={line.project}
+            selected={line.project.key === selected?.key}
+            width={width}
+            cols={cols}
+          />
+        ) : (
+          <Text key={line.key}> </Text>
+        ),
+      )}
       <Box marginTop={1} width={width}>
         <Text color={theme.muted} wrap="truncate-end">
           {busy ? `${busy}...` : legend()}

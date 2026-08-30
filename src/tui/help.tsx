@@ -33,15 +33,22 @@ const PAGE: [string, string][] = [
   [SOURCE_HEADER, 'one slot per store, in that order'],
   ['new', 'no snapshot old enough to subtract. Unknown, never zero'],
   ['', ''],
+  ['', 'tables'],
+  ['PACKAGES', 'what a registry publishes: downloads, their delta, the trace'],
+  ['EXTENSIONS', 'what a store publishes: users, their delta, the rating'],
+  ['both', 'GitHub reads the same either way, so stars and version are shared'],
+  ['', ''],
   ['', 'columns'],
   ['WEEK', 'downloads over seven days, summed across the registries'],
   ['USERS', 'the Chrome install bucket, or Firefox daily users. Never both'],
+  ['RATING', 'the score, and how many ratings are behind it'],
   ['VERSION', 'the version every store agrees on'],
   ['the trace', 'ninety days of daily downloads'],
+  ['+/-', 'green rose, red fell, grey held or is unknown'],
 ]
 
 export function Help({ offset, width, rows }: { offset: number; width: number; rows: number }) {
-  const lines = PAGE.map(([key, text]) => (key ? `  ${key.padEnd(10)}${text}` : text ? text : ''))
+  const lines = PAGE.map(([key, text]) => (key ? `  ${key.padEnd(11)}${text}` : text ? text : ''))
   const visible = lines.slice(offset, offset + rows)
   const more = lines.length - offset - visible.length
 

@@ -26,6 +26,7 @@ function project(targets: Target[]): Project {
   return {
     key: targets.map((t) => t.id).join('+'),
     name: 'demo',
+    kind: 'package',
     targets,
     changed: false,
     stale: false,

@@ -24,9 +24,18 @@ export type Reach = { label: string; source: Ecosystem; bucket: boolean; delta: 
 /** A score and the number of ratings behind it, from whichever store has the most. */
 export type Rating = { score: number; count: number; source: Ecosystem }
 
+/**
+ * Which of the two tables a project belongs in. A store listing is what makes something
+ * an extension, so a project that both publishes a package and ships a listing is filed
+ * under extensions: that is where its users and its rating can be read. The detail pane
+ * carries every store either way.
+ */
+export type Kind = 'package' | 'extension'
+
 export type Project = {
   key: string
   name: string
+  kind: Kind
   targets: Target[]
   changed: boolean
   stale: boolean
@@ -171,6 +180,9 @@ export function buildProjects(): Project[] {
     return {
       key: ordered.map((t) => t.id).join('+'),
       name: displayName(ordered, config.accounts.npm),
+      kind: ordered.some((t) => t.ecosystem === 'cws' || t.ecosystem === 'amo')
+        ? 'extension'
+        : 'package',
       targets: ordered,
       changed: ordered.some((t) =>
         t.deltas ? Object.values(t.deltas).some((d) => d !== null && d !== 0) : false,
@@ -299,7 +311,8 @@ function driftRank(project: Project): number {
 }
 
 /**
- * Filter then sort, both pure, so the pane is a function of the store plus three keys.
+ * Filter, sort, then group into the two tables, all pure, so the pane is a function of
+ * the store plus three keys.
  * "default" is the order buildProjects already chose, which is the only one that answers
  * "what moved", so cycling sorts always has a way back to it.
  */
@@ -318,18 +331,33 @@ export function applyView(projects: Project[], view: View): Project[] {
     )
   })
 
-  switch (view.sort) {
+  return bySection(sorted(matched, view.sort))
+}
+
+function sorted(projects: Project[], sort: Sort): Project[] {
+  switch (sort) {
     case 'drift':
-      return matched.toSorted((a, b) => driftRank(a) - driftRank(b) || byName(a, b))
+      return projects.toSorted((a, b) => driftRank(a) - driftRank(b) || byName(a, b))
     case 'downloads':
-      return matched.toSorted((a, b) => (b.downloads?.value ?? -1) - (a.downloads?.value ?? -1))
+      return projects.toSorted((a, b) => (b.downloads?.value ?? -1) - (a.downloads?.value ?? -1))
     case 'stars':
-      return matched.toSorted((a, b) => (b.stars?.value ?? -1) - (a.stars?.value ?? -1))
+      return projects.toSorted((a, b) => (b.stars?.value ?? -1) - (a.stars?.value ?? -1))
     case 'name':
-      return matched.toSorted(byName)
+      return projects.toSorted(byName)
     case 'age':
-      return matched.toSorted((a, b) => freshest(a).localeCompare(freshest(b)))
+      return projects.toSorted((a, b) => freshest(a).localeCompare(freshest(b)))
     default:
-      return matched
+      return projects
   }
+}
+
+/**
+ * Packages first, then extensions, so the cursor moves in the order the screen draws and
+ * a sort reorders rows inside a table rather than shuffling the two together.
+ */
+export function bySection(projects: Project[]): Project[] {
+  return [
+    ...projects.filter((p) => p.kind === 'package'),
+    ...projects.filter((p) => p.kind === 'extension'),
+  ]
 }

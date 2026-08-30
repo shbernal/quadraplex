@@ -5,7 +5,7 @@ import { formatDelta, metricLabel, metricText, relativeAge, since, span } from '
 import type { IssueDetail } from '../sources/github.ts'
 import type { Target } from '../core/types.ts'
 import type { Project, Stargazers } from './model.ts'
-import { theme } from './theme.ts'
+import { deltaColor, theme } from './theme.ts'
 
 /**
  * One terminal row. Every node truncates rather than wraps, so the count of lines is the
@@ -126,7 +126,7 @@ function targetLines(target: Target, focus: number, selected: boolean): Line[] {
           {metricLabel(key).padEnd(22)}
           <Text bold>{metricText(value)}</Text>
           {typeof value === 'number' ? (
-            <Text color={delta && delta > 0 ? theme.up : theme.muted}>
+            <Text color={deltaColor(delta)}>
               {'  '}
               {formatDelta(delta)}
               {since(target.deltaBaselineAt)}

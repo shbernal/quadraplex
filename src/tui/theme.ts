@@ -31,3 +31,13 @@ export const SOURCE_SLOTS = [
 ] as const
 
 export const SOURCE_HEADER = SOURCE_SLOTS.map((slot) => slot.letter).join('')
+
+/**
+ * A delta reads by sign before it reads by value, so green is up and red is down. Every
+ * delta is printed with its own sign, which is what keeps NO_COLOR readable, and an
+ * unknown one stays grey: "new" is not a fall.
+ */
+export function deltaColor(delta: number | null | undefined): string | undefined {
+  if (delta === null || delta === undefined || delta === 0) return theme.muted
+  return delta > 0 ? theme.up : theme.down
+}
