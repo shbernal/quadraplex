@@ -3,13 +3,18 @@ import { useCallback, useMemo, useState } from 'react'
 import { Box, Text, useApp, useInput, useStdout } from 'ink'
 import { compactNumber, formatDelta, relativeAge, since } from '../core/format.ts'
 import {
+  applyView,
   awaitingCurves,
   buildProjects,
+  DEFAULT_VIEW,
   focusables,
   homeUrl,
   projectItems,
   projectStargazers,
+  SCOPES,
+  SORTS,
   type Project,
+  type View,
 } from './model.ts'
 import { Sparkline } from './sparkline.tsx'
 import { Detail, Item } from './detail.tsx'
@@ -179,12 +184,32 @@ function Row({
   )
 }
 
-function Header({ projects, width, cols }: { projects: Project[]; width: number; cols: Columns }) {
+function Header({
+  projects,
+  total,
+  view,
+  width,
+  cols,
+}: {
+  projects: Project[]
+  total: number
+  view: View
+  width: number
+  cols: Columns
+}) {
   const changed = projects.filter((p) => p.changed).length
-  const targets = projects.reduce((total, p) => total + p.targets.length, 0)
+  const targets = projects.reduce((sum, p) => sum + p.targets.length, 0)
   const newest = projects
     .flatMap((p) => p.targets.map((t) => t.fetchedAt))
     .reduce((latest, at) => (at > latest ? at : latest), '')
+  // A filtered list must never read like the whole portfolio, so the count says so and
+  // the chips name every narrowing that is in force.
+  const filtered = projects.length !== total
+  const chips = [
+    view.query ? `/${view.query}` : '',
+    view.scope === 'all' ? '' : view.scope,
+    view.sort === 'default' ? '' : `by ${view.sort}`,
+  ].filter(Boolean)
 
   return (
     <Box flexDirection="column" width={width}>
@@ -194,9 +219,16 @@ function Header({ projects, width, cols }: { projects: Project[]; width: number;
             {' QUADRAPLEX '}
           </Text>
         </Box>
+        {chips.length > 0 ? (
+          <Box flexShrink={0}>
+            <Text color={theme.warn}>{`${chips.join(' ')} `}</Text>
+          </Box>
+        ) : null}
         <Box flexGrow={1} flexShrink={1} overflow="hidden">
           <Text color={theme.muted} wrap="truncate-end">
-            {targets} targets in {projects.length} projects, {changed} changed
+            {targets} targets in {filtered ? `${projects.length} of ${total}` : projects.length}
+            {' projects, '}
+            {changed} changed
             {newest ? `, refreshed ${relativeAge(newest)}` : ''}
           </Text>
         </Box>
@@ -231,19 +263,30 @@ function legend(cols: Columns): string {
   return parts.join('   ')
 }
 
+function keys(view: View): string {
+  const parts = ['j/k move', 'enter detail', 'o open', '/ filter', 'e store', 's sort', 'r refresh']
+  if (view.query || view.scope !== 'all' || view.sort !== 'default') parts.push('c clear')
+  return ` ${parts.join('   ')}   q quit`
+}
+
 export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   const { exit } = useApp()
   const { stdout } = useStdout()
   const width = Math.max(stdout?.columns ?? 80, 40)
   const rows = Math.max((stdout?.rows ?? 24) - 7, 3)
 
-  const [projects, setProjects] = useState<Project[]>(() => buildProjects())
+  const [all, setAll] = useState<Project[]>(() => buildProjects())
   const [cursor, setCursor] = useState(0)
-  const [view, setView] = useState<'list' | 'detail' | 'item'>('list')
+  const [pane, setPane] = useState<'list' | 'detail' | 'item'>('list')
+  const [view, setView] = useState<View>(DEFAULT_VIEW)
+  const [typing, setTyping] = useState<string | null>(null)
   const [detailCursor, setDetailCursor] = useState(0)
   const [scroll, setScroll] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
 
+  const projects = useMemo(() => applyView(all, view), [all, view])
+  // Against what is on screen, so scoping to one store drops the columns the rest of the
+  // portfolio was paying for.
   const cols = useMemo(() => layout(width, projects), [width, projects])
 
   // Clamped during render rather than corrected in an effect, so a refresh that shortens
@@ -263,7 +306,7 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   const item = current?.kind === 'item' ? current.item : undefined
 
   const reload = useCallback(() => {
-    setProjects(buildProjects())
+    setAll(buildProjects())
   }, [])
 
   /**
@@ -284,9 +327,25 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   }, [onRefresh, reload])
 
   useInput((input, key) => {
+    // A filter is a text field for as long as it is open, so nothing below it can steal a
+    // letter. Escape restores what was showing before, which is the only way back from a
+    // query that matched nothing.
+    if (typing !== null) {
+      if (key.escape) {
+        setView((v) => ({ ...v, query: typing }))
+        return setTyping(null)
+      }
+      if (key.return) return setTyping(null)
+      if (key.backspace || key.delete) {
+        return setView((v) => ({ ...v, query: v.query.slice(0, -1) }))
+      }
+      if (input && !key.ctrl && !key.meta) setView((v) => ({ ...v, query: v.query + input }))
+      return
+    }
+
     if (input === 'q' || key.escape) {
-      if (view === 'item') return setView('detail')
-      if (view === 'detail') return setView('list')
+      if (pane === 'item') return setPane('detail')
+      if (pane === 'detail') return setPane('list')
       return exit()
     }
     if (busy) return
@@ -294,19 +353,19 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     const down = input === 'j' || key.downArrow
     const up = input === 'k' || key.upArrow
 
-    if (view === 'item') {
+    if (pane === 'item') {
       if (down) setScroll((s) => s + 1)
       if (up) setScroll((s) => Math.max(s - 1, 0))
       if (input === 'o' && item) open(item.url)
       return
     }
 
-    if (view === 'detail') {
+    if (pane === 'detail') {
       if (down) setDetailCursor((c) => Math.min(c + 1, Math.max(focus.length - 1, 0)))
       if (up) setDetailCursor((c) => Math.max(c - 1, 0))
       if (key.return && item) {
         setScroll(0)
-        setView('item')
+        setPane('item')
       }
       if (input === 'o' && current) open(current.url)
       return
@@ -316,9 +375,27 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     if (up) setCursor(Math.max(index - 1, 0))
     if (input === 'g') setCursor(0)
     if (input === 'G') setCursor(projects.length - 1)
+    if (input === '/') {
+      setTyping(view.query)
+      setView((v) => ({ ...v, query: '' }))
+    }
+    // Every narrowing sends the cursor home. Leaving it at row 19 of a list that just
+    // became four rows long is how a keystroke looks like a crash.
+    if (input === 'e') {
+      setCursor(0)
+      setView((v) => ({ ...v, scope: SCOPES[(SCOPES.indexOf(v.scope) + 1) % SCOPES.length]! }))
+    }
+    if (input === 's') {
+      setCursor(0)
+      setView((v) => ({ ...v, sort: SORTS[(SORTS.indexOf(v.sort) + 1) % SORTS.length]! }))
+    }
+    if (input === 'c') {
+      setCursor(0)
+      setView(DEFAULT_VIEW)
+    }
     if (key.return) {
       setDetailCursor(0)
-      setView('detail')
+      setPane('detail')
     }
     if (input === 'o' && selected) open(homeUrl(selected))
     if (input === 'r') void runRefresh()
@@ -329,7 +406,7 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     return projects.slice(start, start + rows)
   }, [projects, index, rows])
 
-  if (projects.length === 0) {
+  if (all.length === 0) {
     return (
       <Box flexDirection="column" padding={1}>
         <Text color={theme.heading}>QUADRAPLEX</Text>
@@ -339,8 +416,8 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     )
   }
 
-  if (view === 'item' && item) return <Item item={item} offset={scroll} width={width} rows={rows} />
-  if (view === 'detail' && selected) {
+  if (pane === 'item' && item) return <Item item={item} offset={scroll} width={width} rows={rows} />
+  if (pane === 'detail' && selected) {
     return (
       <Detail
         project={selected}
@@ -356,7 +433,12 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
 
   return (
     <Box flexDirection="column">
-      <Header projects={projects} width={width} cols={cols} />
+      <Header projects={projects} total={all.length} view={view} width={width} cols={cols} />
+      {projects.length === 0 ? (
+        <Text color={theme.muted}>
+          {`  nothing matches. c clears the filter, ${all.length} projects are in the store.`}
+        </Text>
+      ) : null}
       {window.map((project) => (
         <Row
           key={project.key}
@@ -372,12 +454,21 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
         </Text>
       </Box>
       <Box width={width}>
-        <Text color={theme.muted} wrap="truncate-end">
-          {' j/k move   enter detail   o open   r refresh   q quit'}
-          {selected?.downloads?.baselineAt
-            ? `   deltas${since(selected.downloads.baselineAt)}`
-            : ''}
-        </Text>
+        {typing === null ? (
+          <Text color={theme.muted} wrap="truncate-end">
+            {keys(view)}
+            {selected?.downloads?.baselineAt
+              ? `   deltas${since(selected.downloads.baselineAt)}`
+              : ''}
+          </Text>
+        ) : (
+          <Text wrap="truncate-end">
+            {' /'}
+            {view.query}
+            <Text inverse> </Text>
+            <Text color={theme.muted}>{'   enter keep   esc cancel'}</Text>
+          </Text>
+        )}
       </Box>
     </Box>
   )

@@ -4,6 +4,7 @@ import { compactNumber } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import { loadState, readCurve, readDetail, readSeries } from '../core/store.ts'
 import {
+  ECOSYSTEMS,
   HEADLINE_METRIC,
   type Ecosystem,
   type SeriesPoint,
@@ -267,4 +268,68 @@ export function homeUrl(project: Project): string {
     if (target) return target.url
   }
   return project.targets[0]!.url
+}
+
+export const SORTS = ['default', 'drift', 'downloads', 'stars', 'name', 'age'] as const
+
+export type Sort = (typeof SORTS)[number]
+
+/** What the list is currently showing, as opposed to which pane is drawn. */
+export type View = { query: string; scope: Ecosystem | 'all'; sort: Sort }
+
+export const DEFAULT_VIEW: View = { query: '', scope: 'all', sort: 'default' }
+
+export const SCOPES: View['scope'][] = ['all', ...ECOSYSTEMS]
+
+function freshest(project: Project): string {
+  return project.targets.reduce(
+    (latest, target) => (target.fetchedAt > latest ? target.fetchedAt : latest),
+    '',
+  )
+}
+
+function byName(a: Project, b: Project): number {
+  return a.name.localeCompare(b.name)
+}
+
+function driftRank(project: Project): number {
+  if (project.drift.versions) return 0
+  if (project.drift.unreleased) return 1
+  return 2
+}
+
+/**
+ * Filter then sort, both pure, so the pane is a function of the store plus three keys.
+ * "default" is the order buildProjects already chose, which is the only one that answers
+ * "what moved", so cycling sorts always has a way back to it.
+ */
+export function applyView(projects: Project[], view: View): Project[] {
+  const query = view.query.trim().toLowerCase()
+  const matched = projects.filter((project) => {
+    if (view.scope !== 'all' && !project.targets.some((t) => t.ecosystem === view.scope)) {
+      return false
+    }
+    if (!query) return true
+    // Target ids are searched alongside the display name, so a scope the name has been
+    // stripped of, or a Chrome id no human would recognise, is still reachable.
+    return (
+      project.name.toLowerCase().includes(query) ||
+      project.targets.some((t) => t.id.toLowerCase().includes(query))
+    )
+  })
+
+  switch (view.sort) {
+    case 'drift':
+      return matched.toSorted((a, b) => driftRank(a) - driftRank(b) || byName(a, b))
+    case 'downloads':
+      return matched.toSorted((a, b) => (b.downloads?.value ?? -1) - (a.downloads?.value ?? -1))
+    case 'stars':
+      return matched.toSorted((a, b) => (b.stars?.value ?? -1) - (a.stars?.value ?? -1))
+    case 'name':
+      return matched.toSorted(byName)
+    case 'age':
+      return matched.toSorted((a, b) => freshest(a).localeCompare(freshest(b)))
+    default:
+      return matched
+  }
 }

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { appendSnapshots } from '../src/core/store.ts'
-import { buildProjects } from '../src/tui/model.ts'
+import { applyView, buildProjects, DEFAULT_VIEW } from '../src/tui/model.ts'
 import type { Ecosystem, MetricValue, Snapshot } from '../src/core/types.ts'
 
 let dir: string
@@ -84,4 +84,44 @@ test('the rating shown is the best evidenced one, and an unrated store never win
 test('an add-on nobody rated reports no score rather than an average of zero', () => {
   store([snap('amo:fresh', 'amo', { users: 2, rating: null, ratings: 0 })])
   expect(buildProjects()[0]!.rating).toBeNull()
+})
+
+test('a filter matches the display name and the target ids behind it', () => {
+  store([
+    snap('npm:@scope/widget', 'npm', { downloadsWeek: 5 }),
+    snap('cws:abcdefghijklmnopabcdefghijklmnop', 'cws', { title: 'Blocker' }),
+  ])
+  const all = buildProjects()
+  expect(applyView(all, { ...DEFAULT_VIEW, query: 'widget' })).toHaveLength(1)
+  // The display name strips the scope, so the id is the only place "scope" survives.
+  expect(applyView(all, { ...DEFAULT_VIEW, query: 'scope' })).toHaveLength(1)
+  expect(applyView(all, { ...DEFAULT_VIEW, query: 'cws' })).toHaveLength(1)
+  expect(applyView(all, { ...DEFAULT_VIEW, query: 'nothing' })).toHaveLength(0)
+})
+
+test('a scope keeps a project when any of its targets is in that ecosystem', () => {
+  store([
+    snap('npm:widget', 'npm', { downloadsWeek: 5 }, ['gh:owner/widget']),
+    snap('gh:owner/widget', 'github', { stars: 2 }),
+    snap('amo:addon', 'amo', { users: 4 }),
+  ])
+  const all = buildProjects()
+  expect(applyView(all, { ...DEFAULT_VIEW, scope: 'github' }).map((p) => p.name)).toEqual([
+    'widget',
+  ])
+  expect(applyView(all, { ...DEFAULT_VIEW, scope: 'amo' }).map((p) => p.name)).toEqual(['addon'])
+  expect(applyView(all, { ...DEFAULT_VIEW, scope: 'pypi' })).toHaveLength(0)
+})
+
+test('sorting by drift leads with the stores that disagree, not with what merely moved', () => {
+  store([
+    snap('npm:quiet', 'npm', { downloadsWeek: 900, version: '1.0.0' }),
+    snap('amo:split', 'amo', { users: 1, version: '2.0.0' }, [
+      'cws:abcdefghijklmnopabcdefghijklmnop',
+    ]),
+    snap('cws:abcdefghijklmnopabcdefghijklmnop', 'cws', { version: '1.9.0' }, ['amo:split']),
+  ])
+  const sorted = applyView(buildProjects(), { ...DEFAULT_VIEW, sort: 'drift' })
+  expect(sorted[0]!.drift.versions).not.toBeNull()
+  expect(applyView(buildProjects(), { ...DEFAULT_VIEW, sort: 'downloads' })[0]!.name).toBe('quiet')
 })
