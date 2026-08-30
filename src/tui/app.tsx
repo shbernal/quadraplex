@@ -24,10 +24,37 @@ import { Detail, Item } from './detail.tsx'
 import { Help } from './help.tsx'
 import { deltaColor, DRIFT, MARKERS, SOURCE_HEADER, SOURCE_SLOTS, theme } from './theme.ts'
 
-/** The headline number, its delta and the rating: the cells whose widths both tables share. */
+/** The headline number, the delta trailing it and the rating: widths both tables share. */
 const VALUE = 7
 const DELTA = 8
+const STARS = 6
+const STARS_DELTA = 6
 const RATING = 12
+
+/**
+ * A number and the movement behind it in one column. The number keeps the aligned edge so
+ * the figures still read as a column, and the delta trails it in its own colour, printed
+ * only when there is movement to print.
+ */
+function Metric({
+  text,
+  delta,
+  width,
+  trail,
+}: {
+  text: string
+  delta?: number | null
+  width: number
+  trail: number
+}) {
+  const moved = delta === undefined || delta === 0 ? '' : formatDelta(delta)
+  return (
+    <Text>
+      {text.padStart(width)}
+      <Text color={deltaColor(delta)}>{(moved ? ` ${moved}` : '').padEnd(trail)}</Text>
+    </Text>
+  )
+}
 
 const any = (projects: Project[], has: (project: Project) => unknown) =>
   projects.some((project) => Boolean(has(project)))
@@ -55,7 +82,7 @@ function layout(width: number, projects: Project[]) {
   const src = take(SOURCE_SLOTS.length + 1)
   const value = take(VALUE + DELTA)
   const stars = take(
-    15,
+    3 + STARS + STARS_DELTA,
     any(projects, (p) => p.stars),
   )
   // The trace and the rating never appear on the same row, so they are the same slot,
@@ -130,10 +157,12 @@ function PackageCells({ project, cols }: { project: Project; cols: Columns }) {
   const downloads = project.downloads
   return (
     <>
-      <Text>{(downloads ? compactNumber(downloads.value) : '-').padStart(VALUE)}</Text>
-      <Text color={deltaColor(downloads?.delta)}>
-        {(downloads ? formatDelta(downloads.delta) : '').padStart(DELTA)}
-      </Text>
+      <Metric
+        text={downloads ? compactNumber(downloads.value) : '-'}
+        delta={downloads?.delta}
+        width={VALUE}
+        trail={DELTA}
+      />
       {cols.block ? (
         <Box width={cols.block} flexShrink={0}>
           {cols.spark ? (
@@ -159,10 +188,12 @@ function ExtensionCells({ project, cols }: { project: Project; cols: Columns }) 
   const reach = project.reach
   return (
     <>
-      <Text>{(reach ? reachCell(reach) : '-').padStart(VALUE)}</Text>
-      <Text color={deltaColor(reach?.delta)}>
-        {(reach && !reach.bucket ? formatDelta(reach.delta) : '').padStart(DELTA)}
-      </Text>
+      <Metric
+        text={reach ? reachCell(reach) : '-'}
+        delta={reach && !reach.bucket ? reach.delta : undefined}
+        width={VALUE}
+        trail={DELTA}
+      />
       {cols.block ? (
         <Box width={cols.block} flexShrink={0} justifyContent="flex-end">
           <Text color={theme.muted}>{cols.rating ? ratingCell(project.rating) : ''}</Text>
@@ -212,11 +243,12 @@ function Row({
       {cols.stars ? (
         <Text>
           {'   '}
-          {(stars ? `${stars.value}` : '-').padStart(6)}
-          <Text color={deltaColor(stars?.delta)}>
-            {' '}
-            {(stars ? formatDelta(stars.delta) : '').padStart(5)}
-          </Text>
+          <Metric
+            text={stars ? `${stars.value}` : '-'}
+            delta={stars?.delta}
+            width={STARS}
+            trail={STARS_DELTA}
+          />
         </Text>
       ) : null}
       {cols.version ? (
@@ -292,10 +324,9 @@ function columnHeader(kind: Kind, cols: Columns): string {
     '    ',
     (pkg ? 'PACKAGES' : 'EXTENSIONS').padEnd(cols.name).slice(0, cols.name),
     cols.src ? ` ${SOURCE_HEADER}` : '',
-    cols.value ? (pkg ? 'WEEK' : 'USERS').padStart(VALUE) : '',
-    cols.value ? (pkg ? 'DELTA' : '+/-').padStart(DELTA) : '',
+    cols.value ? (pkg ? 'WEEK' : 'USERS').padStart(VALUE).padEnd(VALUE + DELTA) : '',
     cols.block ? blockHeader(pkg, cols) : '',
-    cols.stars ? `   ${'STARS'.padStart(6)} ${'+/-'.padStart(5)}` : '',
+    cols.stars ? `   ${'STARS'.padStart(STARS).padEnd(STARS + STARS_DELTA)}` : '',
     cols.version ? '  VERSION'.padStart(10) : '',
     cols.age ? '  FETCHED'.padStart(10) : '',
   ].join('')
