@@ -2,7 +2,7 @@ import { Box, Text } from 'ink'
 import { formatDelta, relativeAge, since } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import type { Target } from '../core/types.ts'
-import type { Project } from './model.ts'
+import type { Project, Stargazers } from './model.ts'
 import { theme } from './theme.ts'
 
 function Metrics({ project }: { project: Project }) {
@@ -66,30 +66,79 @@ function visibleMetrics(metrics: Target['metrics']): [string, Target['metrics'][
   })
 }
 
+/** Enough of the roster to see who is arriving, never enough to bury the open items. */
+const ROSTER = 5
+
+/**
+ * Names, not a leaderboard. A large repo only ever has its tail harvested, so the block
+ * says "recent" and never implies the roster adds up to the star count beside it.
+ */
+function Roster({ stargazers, waiting }: { stargazers: Stargazers | null; waiting: boolean }) {
+  if (!stargazers) {
+    return waiting ? (
+      <Box marginTop={1}>
+        <Text color={theme.muted}>{'recent stargazers   run "qplex refresh --curves"'}</Text>
+      </Box>
+    ) : null
+  }
+  const shown = stargazers.people.slice(0, ROSTER)
+  const more = stargazers.people.length - shown.length
+
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Text color={theme.heading}>
+        recent stargazers
+        <Text color={theme.muted}>{`   as of ${relativeAge(stargazers.asOf)}`}</Text>
+      </Text>
+      {shown.map((person) => (
+        <Text key={person.login} wrap="truncate-end">
+          {'  @'}
+          {person.login.padEnd(24)}
+          <Text color={theme.muted}>{`starred ${relativeAge(person.starredAt)}`}</Text>
+        </Text>
+      ))}
+      {more > 0 ? <Text color={theme.muted}>{`  and ${more} more on record`}</Text> : null}
+    </Box>
+  )
+}
+
 export function Detail({
   project,
   items,
   cursor,
+  stargazers,
+  waiting,
   width,
   rows,
 }: {
   project: Project
   items: IssueDetail[]
   cursor: number
+  stargazers: Stargazers | null
+  waiting: boolean
   width: number
   rows: number
 }) {
+  // The roster takes a fixed slice off the top and the open items keep the rest, so a
+  // long backlog cannot squeeze the names out and the names cannot bury the backlog.
+  const reserved = stargazers ? Math.min(stargazers.people.length, ROSTER) + 3 : waiting ? 2 : 0
+  const height = Math.max(rows - reserved, 1)
+  // Scrolled rather than truncated, because a cursor the pane cannot show is a cursor the
+  // reader cannot follow.
+  const start = Math.max(0, Math.min(cursor - Math.floor(height / 2), items.length - height))
+  const visible = items.slice(start, start + height)
+
   return (
     <Box flexDirection="column" width={width}>
       <Text color={theme.heading} bold>
         {project.name}
       </Text>
       <Metrics project={project} />
-      {items.length > 0 ? (
+      {visible.length > 0 ? (
         <Box flexDirection="column" marginTop={1}>
           <Text color={theme.heading}>open items</Text>
-          {items.slice(0, Math.max(rows, 1)).map((item, index) => (
-            <Text key={item.url} wrap="truncate-end" inverse={index === cursor}>
+          {visible.map((item, index) => (
+            <Text key={item.url} wrap="truncate-end" inverse={start + index === cursor}>
               {' '}
               {item.kind === 'pr' ? 'PR' : ' #'}
               {String(item.number).padEnd(5)}
@@ -103,6 +152,7 @@ export function Detail({
           ))}
         </Box>
       ) : null}
+      <Roster stargazers={stargazers} waiting={waiting} />
       <Box marginTop={1}>
         <Text color={theme.muted}>
           {items.length ? 'j/k item   enter read   ' : ''}esc back o open q quit

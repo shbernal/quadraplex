@@ -1,5 +1,5 @@
 import { getJson } from '../core/http.ts'
-import type { Curve } from '../core/types.ts'
+import type { Curve, Stargazer } from '../core/types.ts'
 import { githubToken, type Repo } from './github.ts'
 
 const API = 'https://api.github.com'
@@ -13,14 +13,41 @@ const SAMPLES = 16
  * A whole star curve costs about 17 requests whether the repo has 200 stars or 200k,
  * because pages are sampled rather than walked. Paginating every stargazer instead would
  * be thousands of requests on a large repo.
+ *
+ * Every page already carries who starred alongside when, so the identities behind the
+ * curve are harvested from the same responses and cost nothing on top of it.
  */
-type Stargazer = { starred_at: string }
+type Entry = { starred_at: string; user?: { login?: string; html_url?: string } | null }
 
 /**
  * Without this exact media type the endpoint returns plain user objects with no
  * starred_at at all. It fails silently, which is the single easiest hour to lose here.
  */
 const ACCEPT = 'application/vnd.github.v3.star+json'
+
+const RECENT = 100
+
+/**
+ * Newest first, capped. An entry with no user object is dropped rather than shown as
+ * someone unnamed, so the list is short and honest instead of long and padded.
+ */
+export function recentStargazers(entries: Entry[], limit = RECENT): Stargazer[] {
+  const byLogin = new Map<string, Stargazer>()
+  for (const entry of entries) {
+    const login = entry.user?.login
+    if (!login || !entry.starred_at) continue
+    const seen = byLogin.get(login)
+    if (seen && seen.starredAt >= entry.starred_at) continue
+    byLogin.set(login, {
+      login,
+      url: entry.user?.html_url ?? `https://github.com/${login}`,
+      starredAt: entry.starred_at,
+    })
+  }
+  return [...byLogin.values()]
+    .toSorted((a, b) => b.starredAt.localeCompare(a.starredAt))
+    .slice(0, limit)
+}
 
 function options() {
   const token = githubToken()
@@ -58,8 +85,8 @@ export function sampleIndexes(length: number, samples = SAMPLES): number[] {
 async function page(
   repo: string,
   number: number,
-): Promise<{ items: Stargazer[]; link: string | null }> {
-  const { data, headers } = await getJson<Stargazer[]>(
+): Promise<{ items: Entry[]; link: string | null }> {
+  const { data, headers } = await getJson<Entry[]>(
     `${API}/repos/${repo}/stargazers?per_page=${PER_PAGE}&page=${number}`,
     options(),
   )
@@ -70,12 +97,13 @@ export async function fetchCurve(repo: Repo): Promise<Curve> {
   const id = `gh:${repo.full_name}`
   const total = repo.stargazers_count
   if (total === 0) {
-    return { id, fetchedAt: new Date().toISOString(), points: [] }
+    return { id, fetchedAt: new Date().toISOString(), points: [], stargazers: [] }
   }
 
   const first = await page(repo.full_name, 1)
   const pageCount = lastPageFrom(first.link)
   const points: { date: string; stars: number }[] = []
+  let seen: Entry[] = []
 
   if (pageCount < SAMPLES) {
     // Small repo: every page is cheap, so walk them and stride the flattened array. The
@@ -84,21 +112,17 @@ export async function fetchCurve(repo: Repo): Promise<Curve> {
       Array.from({ length: pageCount - 1 }, (_, i) => page(repo.full_name, i + 2)),
     )
     const all = [first, ...rest].flatMap((result) => result.items)
+    seen = all
     for (const i of sampleIndexes(all.length)) {
       points.push({ date: all[i]!.starred_at, stars: i + 1 })
     }
   } else {
-    // Large repo: sample evenly spaced pages and read only their first entry, whose
-    // cumulative count is 100 * (page - 1). Page 1 is forced in so the curve starts at
-    // the repo's beginning rather than at the first sampled page.
-    const step = pageCount / SAMPLES
-    const wanted = [
-      ...new Set([1, ...Array.from({ length: SAMPLES }, (_, i) => Math.round((i + 1) * step))]),
-    ]
-      .filter((number) => number >= 1 && number <= pageCount)
-      .toSorted((a, b) => a - b)
+    // Large repo: sample evenly spaced pages, whose first entry has a cumulative count of
+    // 100 * (page - 1). Page 1 is forced in so the curve starts at the repo's beginning
+    // rather than at the first sampled page, and the last page is always sampled too,
+    // which is where the most recent stargazers come from.
     const sampled = await Promise.all(
-      wanted.map(async (number) => ({
+      samplePages(pageCount).map(async (number) => ({
         number,
         items: number === 1 ? first.items : (await page(repo.full_name, number)).items,
       })),
@@ -107,6 +131,9 @@ export async function fetchCurve(repo: Repo): Promise<Curve> {
       const head = items[0]
       if (head) points.push({ date: head.starred_at, stars: PER_PAGE * (number - 1) })
     }
+    // Only the first entry of a page shapes the curve, but the whole page was transferred
+    // and every name on it is already paid for.
+    seen = sampled.flatMap((result) => result.items)
   }
 
   // The sampling arithmetic tops out below the real total, so the curve undershoots and
@@ -117,5 +144,6 @@ export async function fetchCurve(repo: Repo): Promise<Curve> {
     id,
     fetchedAt: new Date().toISOString(),
     points: points.toSorted((a, b) => a.date.localeCompare(b.date)),
+    stargazers: recentStargazers(seen),
   }
 }

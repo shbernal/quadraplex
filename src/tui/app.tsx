@@ -2,7 +2,13 @@ import { spawn } from 'node:child_process'
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Text, useApp, useInput, useStdout } from 'ink'
 import { compactNumber, formatDelta, relativeAge, since } from '../core/format.ts'
-import { buildProjects, projectItems, type Project } from './model.ts'
+import {
+  awaitingCurves,
+  buildProjects,
+  projectItems,
+  projectStargazers,
+  type Project,
+} from './model.ts'
 import { Sparkline } from './sparkline.tsx'
 import { Detail, Item } from './detail.tsx'
 import { MARKERS, theme } from './theme.ts'
@@ -125,6 +131,10 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   const index = Math.max(0, Math.min(cursor, projects.length - 1))
   const selected = projects[index]
   const items = useMemo(() => (selected ? projectItems(selected) : []), [selected])
+  // Both read the store, so they are recomputed with the selection rather than on every
+  // keystroke, exactly like the open items above.
+  const stargazers = useMemo(() => (selected ? projectStargazers(selected) : null), [selected])
+  const waiting = useMemo(() => (selected ? awaitingCurves(selected) : false), [selected])
   const item = items[Math.min(itemCursor, Math.max(items.length - 1, 0))]
 
   const reload = useCallback(() => {
@@ -211,6 +221,8 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
         project={selected}
         items={items}
         cursor={Math.min(itemCursor, Math.max(items.length - 1, 0))}
+        stargazers={stargazers}
+        waiting={waiting}
         width={width}
         rows={rows}
       />

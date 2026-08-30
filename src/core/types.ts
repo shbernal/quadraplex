@@ -38,10 +38,19 @@ export type State = {
 /** Per-day download counts, refetched from the registry rather than accumulated. */
 export type SeriesPoint = { date: string; downloads: number }
 
+/** Who starred a repo, and when. Public profile data, same as the count above it. */
+export type Stargazer = { login: string; url: string; starredAt: string }
+
 export type Curve = {
   id: string
   fetchedAt: string
   points: { date: string; stars: number }[]
+  /**
+   * The most recent stargazers, newest first, harvested from the very pages the curve is
+   * sampled from. Absent means nobody looked, not that nobody starred, and a large repo
+   * only ever knows its tail: the count in `metrics.stars` remains the total.
+   */
+  stargazers?: Stargazer[]
 }
 
 /** Which metric leads a target's row and its one-line summary. */

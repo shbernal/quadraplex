@@ -36,7 +36,7 @@ $XDG_DATA_HOME/quadraplex/     (falls back to ~/.local/share/quadraplex)
   config.json         accounts, exclusions, manual targets, TTL overrides
   cache.json          ETags and conditional-request bookkeeping, per endpoint
   series/<id>.json    per-day download history, refetched not accumulated
-  curves/<id>.json    star history, one file per repo
+  curves/<id>.json    star history plus recent stargazer logins, one file per repo
 ```
 
 `QUADRAPLEX_DATA_DIR` overrides the root, which is what the tests use.

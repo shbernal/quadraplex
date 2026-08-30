@@ -15,7 +15,7 @@ Options
   --json                       machine-readable output
   --fresh                      refetch, allowed only on a single target
   --only <ecosystem>           refresh one of npm, pypi, github, amo, cws
-  --curves                     refresh only star curves, never touched by a plain refresh
+  --curves                     star curves and recent stargazers, never touched by a plain refresh
   --version, --help
 
 Breadth comes from cache, freshness comes from a target. status and list never fetch, and

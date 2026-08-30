@@ -1,7 +1,7 @@
 import { loadConfig } from '../core/config.ts'
 import type { IssueDetail } from '../sources/github.ts'
-import { loadState, readDetail, readSeries } from '../core/store.ts'
-import { HEADLINE_METRIC, type SeriesPoint, type Target } from '../core/types.ts'
+import { loadState, readCurve, readDetail, readSeries } from '../core/store.ts'
+import { HEADLINE_METRIC, type SeriesPoint, type Stargazer, type Target } from '../core/types.ts'
 
 export type Metric = { value: number; delta: number | null; baselineAt?: string }
 
@@ -131,6 +131,43 @@ export function buildProjects(): Project[] {
 function rank(project: Project): number {
   if (project.changed) return 0
   return project.downloads?.delta === null ? 1 : 2
+}
+
+/** The roster, plus the weakest freshness claim it is allowed to make. */
+export type Stargazers = { people: Stargazer[]; asOf: string }
+
+/**
+ * Who starred, read from the curves `refresh --curves` leaves on disk rather than
+ * fetched. A project spanning several repos reports the oldest of their curves, so the
+ * age shown is the one the whole roster can stand behind.
+ */
+export function projectStargazers(project: Project): Stargazers | null {
+  const byLogin = new Map<string, Stargazer>()
+  let asOf = ''
+  for (const target of project.targets) {
+    if (target.ecosystem !== 'github') continue
+    const curve = readCurve(target.id)
+    if (!curve?.stargazers) continue
+    if (!asOf || curve.fetchedAt < asOf) asOf = curve.fetchedAt
+    for (const person of curve.stargazers) {
+      const seen = byLogin.get(person.login)
+      if (!seen || person.starredAt > seen.starredAt) byLogin.set(person.login, person)
+    }
+  }
+  if (byLogin.size === 0) return null
+  return {
+    people: [...byLogin.values()].toSorted((a, b) => b.starredAt.localeCompare(a.starredAt)),
+    asOf,
+  }
+}
+
+/** A repo with stars but no harvested roster is waiting on a curve nobody has built. */
+export function awaitingCurves(project: Project): boolean {
+  return project.targets.some((target) => {
+    const stars = target.metrics.stars
+    if (target.ecosystem !== 'github' || typeof stars !== 'number' || stars === 0) return false
+    return readCurve(target.id)?.stargazers === undefined
+  })
 }
 
 /**

@@ -22,6 +22,9 @@ non-zero only when every target failed.
 curve costs about 17 requests per repo, which would consume an unauthenticated GitHub
 budget in a single command.
 
+It also harvests the most recent stargazer logins, which ride in on the pages the curve is
+sampled from and add no requests. They are what the dashboard's detail pane lists.
+
 ## `qplex status [--json]`
 
 A compact index of everything, from cache. Per target: id, ecosystem, name, how it was

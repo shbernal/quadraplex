@@ -60,12 +60,31 @@ Three details are load bearing:
   silently.
 - Two code paths by size. Under about 1600 stars every page is fetched and the flattened
   list is strided, where the cumulative count is `index + 1`. Above that, evenly spaced
-  pages are sampled and only their first entry is read, where the cumulative count is
-  `100 * (page - 1)`. Page 1 is forced into the sample set either way.
+  pages are sampled and only their first entry shapes the curve, where the cumulative
+  count is `100 * (page - 1)`. Page 1 is forced into the sample set either way.
 - The live `stargazers_count` is appended as the final point. The sampling arithmetic tops
   out below the real total, so without it every curve ends wrong.
 
-The fetcher has no consumer in v1. It puts the curve on disk for whenever a chart lands.
+The curve points have no consumer yet and sit on disk for whenever a chart lands. The
+identities harvested alongside them do, in the dashboard's detail pane.
+
+### Who starred
+
+Every `/stargazers` page returns the user object next to `starred_at`, so the logins
+behind the curve arrive in responses already paid for and cost nothing on top of it. The
+most recent 100 are stored on the curve as `stargazers` and shown in the detail pane.
+
+Both sampling paths reach the tail. The small path walks every page, and the large path
+always samples the last one, which is where the newest stargazers sit.
+
+`stargazers` absent on a curve means nobody harvested it, not that nobody starred. On a
+large repo the roster only ever covers the tail: `metrics.stars` remains the total, and
+the pane labels the list as recent rather than complete.
+
+Logins only. The stargazers endpoint returns GitHub's simple user shape, which carries
+`login` and `html_url` but no display name, bio or follower count. Those need one
+`GET /users/<login>` per person, so resolving them belongs behind its own flag and its
+own TTL rather than riding along here.
 
 ### Untested against a large repo
 
