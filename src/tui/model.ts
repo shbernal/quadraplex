@@ -1,7 +1,13 @@
 import { loadConfig } from '../core/config.ts'
 import type { IssueDetail } from '../sources/github.ts'
 import { loadState, readCurve, readDetail, readSeries } from '../core/store.ts'
-import { HEADLINE_METRIC, type SeriesPoint, type Stargazer, type Target } from '../core/types.ts'
+import {
+  HEADLINE_METRIC,
+  type Ecosystem,
+  type SeriesPoint,
+  type Stargazer,
+  type Target,
+} from '../core/types.ts'
 
 export type Metric = { value: number; delta: number | null; baselineAt?: string }
 
@@ -179,4 +185,31 @@ export function projectItems(project: Project): IssueDetail[] {
     .filter((target) => target.ecosystem === 'github')
     .flatMap((target) => (readDetail(target.id) as { items?: IssueDetail[] } | null)?.items ?? [])
     .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+}
+
+/** What the detail cursor can land on, in the order the pane draws it. */
+export type Focus =
+  | { kind: 'target'; url: string; target: Target }
+  | { kind: 'item'; url: string; item: IssueDetail }
+
+export function focusables(project: Project, items: IssueDetail[]): Focus[] {
+  return [
+    ...project.targets.map((target) => ({ kind: 'target' as const, url: target.url, target })),
+    ...items.map((item) => ({ kind: 'item' as const, url: item.url, item })),
+  ]
+}
+
+/**
+ * Which page "o" opens from the list, where there is no cursor to ask. The repo is a
+ * project's home when it has one, and ordering the rest by how much they say about it
+ * beats the alphabetical accident of the target list.
+ */
+const HOME_ORDER: Ecosystem[] = ['github', 'npm', 'pypi', 'amo', 'cws']
+
+export function homeUrl(project: Project): string {
+  for (const ecosystem of HOME_ORDER) {
+    const target = project.targets.find((t) => t.ecosystem === ecosystem)
+    if (target) return target.url
+  }
+  return project.targets[0]!.url
 }

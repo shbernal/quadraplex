@@ -5,6 +5,8 @@ import { compactNumber, formatDelta, relativeAge, since } from '../core/format.t
 import {
   awaitingCurves,
   buildProjects,
+  focusables,
+  homeUrl,
   projectItems,
   projectStargazers,
   type Project,
@@ -122,7 +124,7 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   const [projects, setProjects] = useState<Project[]>(() => buildProjects())
   const [cursor, setCursor] = useState(0)
   const [view, setView] = useState<'list' | 'detail' | 'item'>('list')
-  const [itemCursor, setItemCursor] = useState(0)
+  const [detailCursor, setDetailCursor] = useState(0)
   const [scroll, setScroll] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -135,7 +137,12 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
   // keystroke, exactly like the open items above.
   const stargazers = useMemo(() => (selected ? projectStargazers(selected) : null), [selected])
   const waiting = useMemo(() => (selected ? awaitingCurves(selected) : false), [selected])
-  const item = items[Math.min(itemCursor, Math.max(items.length - 1, 0))]
+  // Targets and open items share one cursor, so "o" always has an unambiguous answer and
+  // the pane has a single thing to scroll into view.
+  const focus = useMemo(() => (selected ? focusables(selected, items) : []), [selected, items])
+  const focusIndex = Math.min(detailCursor, Math.max(focus.length - 1, 0))
+  const current = focus[focusIndex]
+  const item = current?.kind === 'item' ? current.item : undefined
 
   const reload = useCallback(() => {
     setProjects(buildProjects())
@@ -177,13 +184,13 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     }
 
     if (view === 'detail') {
-      if (down) setItemCursor((c) => Math.min(c + 1, Math.max(items.length - 1, 0)))
-      if (up) setItemCursor((c) => Math.max(c - 1, 0))
+      if (down) setDetailCursor((c) => Math.min(c + 1, Math.max(focus.length - 1, 0)))
+      if (up) setDetailCursor((c) => Math.max(c - 1, 0))
       if (key.return && item) {
         setScroll(0)
         setView('item')
       }
-      if (input === 'o' && selected) open(selected.targets[0]!.url)
+      if (input === 'o' && current) open(current.url)
       return
     }
 
@@ -192,10 +199,10 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
     if (input === 'g') setCursor(0)
     if (input === 'G') setCursor(projects.length - 1)
     if (key.return) {
-      setItemCursor(0)
+      setDetailCursor(0)
       setView('detail')
     }
-    if (input === 'o' && selected) open(selected.targets[0]!.url)
+    if (input === 'o' && selected) open(homeUrl(selected))
     if (input === 'r') void runRefresh()
   })
 
@@ -220,7 +227,7 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
       <Detail
         project={selected}
         items={items}
-        cursor={Math.min(itemCursor, Math.max(items.length - 1, 0))}
+        cursor={focusIndex}
         stargazers={stargazers}
         waiting={waiting}
         width={width}

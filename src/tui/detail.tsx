@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Box, Text } from 'ink'
 import { formatDelta, relativeAge, since } from '../core/format.ts'
 import type { IssueDetail } from '../sources/github.ts'
@@ -5,48 +6,11 @@ import type { Target } from '../core/types.ts'
 import type { Project, Stargazers } from './model.ts'
 import { theme } from './theme.ts'
 
-function Metrics({ project }: { project: Project }) {
-  return (
-    <>
-      {project.targets.map((target) => (
-        <Box key={target.id} flexDirection="column" marginTop={1}>
-          <Text>
-            <Text color={theme.accent}>{target.id}</Text>
-            <Text color={theme.muted}>
-              {'  '}
-              {target.url}
-            </Text>
-          </Text>
-          <Text color={theme.muted}>
-            fetched {relativeAge(target.fetchedAt)}
-            {target.stale ? '  ! stale' : ''}
-            {target.discovered === 'config' ? '  from config' : ''}
-          </Text>
-          {target.errors?.length ? (
-            <Text color={theme.warn}>! {target.errors.join('; ')}</Text>
-          ) : null}
-          {visibleMetrics(target.metrics).map(([key, value]) => {
-            const delta = target.deltas ? (target.deltas[key] ?? null) : null
-            return (
-              <Text key={key}>
-                {'  '}
-                {label(key).padEnd(22)}
-                <Text bold>{value === null ? '-' : String(value)}</Text>
-                {typeof value === 'number' ? (
-                  <Text color={delta && delta > 0 ? theme.up : theme.muted}>
-                    {'  '}
-                    {formatDelta(delta)}
-                    {since(target.deltaBaselineAt)}
-                  </Text>
-                ) : null}
-              </Text>
-            )
-          })}
-        </Box>
-      ))}
-    </>
-  )
-}
+/**
+ * One terminal row. Every node truncates rather than wraps, so the count of lines is the
+ * count of rows and the pane can be windowed by slicing.
+ */
+type Line = { key: string; node: ReactNode; focus?: number }
 
 /** open_issues_count includes pull requests, and the name says so wherever it is shown. */
 function label(key: string): string {
@@ -66,6 +30,105 @@ function visibleMetrics(metrics: Target['metrics']): [string, Target['metrics'][
   })
 }
 
+function blank(key: string): Line {
+  return { key, node: <Text> </Text> }
+}
+
+function heading(key: string, text: string, note?: string): Line {
+  return {
+    key,
+    node: (
+      <Text color={theme.heading} wrap="truncate-end">
+        {text}
+        {note ? <Text color={theme.muted}>{`   ${note}`}</Text> : null}
+      </Text>
+    ),
+  }
+}
+
+function targetLines(target: Target, focus: number, selected: boolean): Line[] {
+  const lines: Line[] = [
+    {
+      key: `${target.id}:head`,
+      focus,
+      node: (
+        <Text wrap="truncate-end" inverse={selected}>
+          <Text color={theme.accent}>{target.id}</Text>
+          <Text color={theme.muted}>
+            {'  '}
+            {target.url}
+          </Text>
+        </Text>
+      ),
+    },
+    {
+      key: `${target.id}:age`,
+      node: (
+        <Text color={theme.muted} wrap="truncate-end">
+          {'  fetched '}
+          {relativeAge(target.fetchedAt)}
+          {target.stale ? '  ! stale' : ''}
+          {target.discovered === 'config' ? '  from config' : ''}
+        </Text>
+      ),
+    },
+  ]
+
+  if (target.errors?.length) {
+    lines.push({
+      key: `${target.id}:errors`,
+      node: (
+        <Text color={theme.warn} wrap="truncate-end">
+          {'  ! '}
+          {target.errors.join('; ')}
+        </Text>
+      ),
+    })
+  }
+
+  for (const [key, value] of visibleMetrics(target.metrics)) {
+    const delta = target.deltas ? (target.deltas[key] ?? null) : null
+    lines.push({
+      key: `${target.id}:${key}`,
+      node: (
+        <Text wrap="truncate-end">
+          {'  '}
+          {label(key).padEnd(22)}
+          <Text bold>{value === null ? '-' : String(value)}</Text>
+          {typeof value === 'number' ? (
+            <Text color={delta && delta > 0 ? theme.up : theme.muted}>
+              {'  '}
+              {formatDelta(delta)}
+              {since(target.deltaBaselineAt)}
+            </Text>
+          ) : null}
+        </Text>
+      ),
+    })
+  }
+  return lines
+}
+
+function itemLine(item: IssueDetail, focus: number, selected: boolean): Line {
+  return {
+    key: item.url,
+    focus,
+    node: (
+      <Text wrap="truncate-end" inverse={selected}>
+        {' '}
+        {item.kind === 'pr' ? 'PR' : ' #'}
+        {String(item.number).padEnd(5)}
+        {item.title}
+        <Text color={theme.muted}>
+          {'  '}
+          {item.author}, {relativeAge(item.createdAt)}
+          {item.labels.length ? `, ${item.labels.join(' ')}` : ''}
+        </Text>
+      </Text>
+    ),
+  }
+}
+
 /** Enough of the roster to see who is arriving, never enough to bury the open items. */
 const ROSTER = 5
 
@@ -73,35 +136,52 @@ const ROSTER = 5
  * Names, not a leaderboard. A large repo only ever has its tail harvested, so the block
  * says "recent" and never implies the roster adds up to the star count beside it.
  */
-function Roster({ stargazers, waiting }: { stargazers: Stargazers | null; waiting: boolean }) {
+function rosterLines(stargazers: Stargazers | null, waiting: boolean): Line[] {
   if (!stargazers) {
-    return waiting ? (
-      <Box marginTop={1}>
-        <Text color={theme.muted}>{'recent stargazers   run "qplex refresh --curves"'}</Text>
-      </Box>
-    ) : null
+    if (!waiting) return []
+    return [
+      blank('roster:gap'),
+      {
+        key: 'roster:waiting',
+        node: (
+          <Text color={theme.muted} wrap="truncate-end">
+            {'recent stargazers   run "qplex refresh --curves"'}
+          </Text>
+        ),
+      },
+    ]
   }
+
   const shown = stargazers.people.slice(0, ROSTER)
   const more = stargazers.people.length - shown.length
-
-  return (
-    <Box flexDirection="column" marginTop={1}>
-      <Text color={theme.heading}>
-        recent stargazers
-        <Text color={theme.muted}>{`   as of ${relativeAge(stargazers.asOf)}`}</Text>
-      </Text>
-      {shown.map((person) => (
-        <Text key={person.login} wrap="truncate-end">
+  const lines: Line[] = [
+    blank('roster:gap'),
+    heading('roster:head', 'recent stargazers', `as of ${relativeAge(stargazers.asOf)}`),
+    ...shown.map((person) => ({
+      key: `roster:${person.login}`,
+      node: (
+        <Text wrap="truncate-end">
           {'  @'}
           {person.login.padEnd(24)}
           <Text color={theme.muted}>{`starred ${relativeAge(person.starredAt)}`}</Text>
         </Text>
-      ))}
-      {more > 0 ? <Text color={theme.muted}>{`  and ${more} more on record`}</Text> : null}
-    </Box>
-  )
+      ),
+    })),
+  ]
+  if (more > 0) {
+    lines.push({
+      key: 'roster:more',
+      node: <Text color={theme.muted}>{`  and ${more} more on record`}</Text>,
+    })
+  }
+  return lines
 }
 
+/**
+ * The whole body is one scrolling flow. Budgeting only the open items, as an earlier
+ * version did, let a project spanning several stores push its own title and footer off
+ * the screen: the metrics block alone outgrows a short terminal.
+ */
 export function Detail({
   project,
   items,
@@ -119,43 +199,50 @@ export function Detail({
   width: number
   rows: number
 }) {
-  // The roster takes a fixed slice off the top and the open items keep the rest, so a
-  // long backlog cannot squeeze the names out and the names cannot bury the backlog.
-  const reserved = stargazers ? Math.min(stargazers.people.length, ROSTER) + 3 : waiting ? 2 : 0
-  const height = Math.max(rows - reserved, 1)
-  // Scrolled rather than truncated, because a cursor the pane cannot show is a cursor the
-  // reader cannot follow.
-  const start = Math.max(0, Math.min(cursor - Math.floor(height / 2), items.length - height))
-  const visible = items.slice(start, start + height)
+  const lines: Line[] = []
+  let focus = 0
+  for (const target of project.targets) {
+    if (lines.length > 0) lines.push(blank(`gap:${target.id}`))
+    lines.push(...targetLines(target, focus, focus === cursor))
+    focus += 1
+  }
+  if (items.length > 0) {
+    lines.push(blank('items:gap'), heading('items:head', 'open items'))
+    for (const item of items) {
+      lines.push(itemLine(item, focus, focus === cursor))
+      focus += 1
+    }
+  }
+  lines.push(...rosterLines(stargazers, waiting))
+
+  const height = Math.max(rows + 2, 3)
+  const cursorLine = lines.findIndex((line) => line.focus === cursor)
+  const start = Math.max(
+    0,
+    Math.min(cursorLine < 0 ? 0 : cursorLine - Math.floor(height / 2), lines.length - height),
+  )
+  const visible = lines.slice(start, start + height)
+  const above = start
+  const below = Math.max(lines.length - start - visible.length, 0)
 
   return (
     <Box flexDirection="column" width={width}>
-      <Text color={theme.heading} bold>
+      <Text color={theme.heading} bold wrap="truncate-end">
         {project.name}
-      </Text>
-      <Metrics project={project} />
-      {visible.length > 0 ? (
-        <Box flexDirection="column" marginTop={1}>
-          <Text color={theme.heading}>open items</Text>
-          {visible.map((item, index) => (
-            <Text key={item.url} wrap="truncate-end" inverse={start + index === cursor}>
-              {' '}
-              {item.kind === 'pr' ? 'PR' : ' #'}
-              {String(item.number).padEnd(5)}
-              {item.title}
-              <Text color={theme.muted}>
-                {'  '}
-                {item.author}, {relativeAge(item.createdAt)}
-                {item.labels.length ? `, ${item.labels.join(' ')}` : ''}
-              </Text>
-            </Text>
-          ))}
-        </Box>
-      ) : null}
-      <Roster stargazers={stargazers} waiting={waiting} />
-      <Box marginTop={1}>
         <Text color={theme.muted}>
-          {items.length ? 'j/k item   enter read   ' : ''}esc back o open q quit
+          {above > 0 ? `   ${above} above` : ''}
+          {below > 0 ? `   ${below} below` : ''}
+        </Text>
+      </Text>
+      {visible.map((line) => (
+        <Box key={line.key} width={width}>
+          {line.node}
+        </Box>
+      ))}
+      <Box marginTop={1}>
+        <Text color={theme.muted} wrap="truncate-end">
+          {' j/k move   '}
+          {items.length ? 'enter read   ' : ''}o open esc back q quit
         </Text>
       </Box>
     </Box>
