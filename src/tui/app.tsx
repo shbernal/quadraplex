@@ -264,12 +264,13 @@ function legend(cols: Columns): string {
 }
 
 function keys(view: View): string {
-  const parts = ['j/k move', 'enter detail', 'o open', '/ filter', 'e store', 's sort', 'r refresh']
+  const parts = ['j/k move', 'enter detail', 'o open', '/ filter', 'e store', 's sort']
+  parts.push(view.scope === 'all' ? 'r refresh' : `r refresh ${view.scope}`)
   if (view.query || view.scope !== 'all' || view.sort !== 'default') parts.push('c clear')
   return ` ${parts.join('   ')}   q quit`
 }
 
-export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
+export function App({ onRefresh }: { onRefresh?: (scope: View['scope']) => Promise<void> }) {
   const { exit } = useApp()
   const { stdout } = useStdout()
   const width = Math.max(stdout?.columns ?? 80, 40)
@@ -311,20 +312,26 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
 
   /**
    * The dashboard never fetches. It shells out to the same CLI so the "breadth comes
-   * from cache" rule holds for humans exactly as it does for agents.
+   * from cache" rule holds for humans exactly as it does for agents, and it refreshes
+   * whatever the list is scoped to: refetching 62 targets to see one Chrome listing move
+   * is a request budget spent on rows nobody is looking at.
    */
-  const runRefresh = useCallback(async () => {
-    setBusy('refreshing')
-    await (onRefresh
-      ? onRefresh()
-      : new Promise<void>((resolve) => {
-          const child = spawn(process.execPath, [process.argv[1]!, 'refresh'], { stdio: 'ignore' })
-          child.on('exit', () => resolve())
-          child.on('error', () => resolve())
-        }))
-    setBusy(null)
-    reload()
-  }, [onRefresh, reload])
+  const runRefresh = useCallback(
+    async (scope: View['scope']) => {
+      setBusy(scope === 'all' ? 'refreshing' : `refreshing ${scope}`)
+      await (onRefresh
+        ? onRefresh(scope)
+        : new Promise<void>((resolve) => {
+            const args = scope === 'all' ? ['refresh'] : ['refresh', '--only', scope]
+            const child = spawn(process.execPath, [process.argv[1]!, ...args], { stdio: 'ignore' })
+            child.on('exit', () => resolve())
+            child.on('error', () => resolve())
+          }))
+      setBusy(null)
+      reload()
+    },
+    [onRefresh, reload],
+  )
 
   useInput((input, key) => {
     // A filter is a text field for as long as it is open, so nothing below it can steal a
@@ -398,7 +405,7 @@ export function App({ onRefresh }: { onRefresh?: () => Promise<void> }) {
       setPane('detail')
     }
     if (input === 'o' && selected) open(homeUrl(selected))
-    if (input === 'r') void runRefresh()
+    if (input === 'r') void runRefresh(view.scope)
   })
 
   const window = useMemo(() => {
