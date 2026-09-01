@@ -81,13 +81,23 @@ log and the clock.
 
 ## Sources
 
-| Source | Discovery         | Serves                                         | Cost per target |
-| ------ | ----------------- | ---------------------------------------------- | --------------- |
-| npm    | maintainer search | daily downloads, version, repo link            | 1 request       |
-| pypi   | config            | daily downloads, version, repo link            | 2 requests      |
-| github | account repos     | stars, forks, the issue and PR split           | 1 to 2 requests |
-| amo    | author id search  | daily users, weekly downloads, rating, version | 0, search pays  |
-| cws    | config            | a bucketed user count, rating, version         | 1 page          |
+| Source | Discovery        | Serves                                         | Cost per target |
+| ------ | ---------------- | ---------------------------------------------- | --------------- |
+| npm    | ownership roster | daily downloads, version, repo link            | 1 to 2 requests |
+| pypi   | config           | daily downloads, version, repo link            | 2 requests      |
+| github | account repos    | stars, forks, the issue and PR split           | 1 to 2 requests |
+| amo    | author id search | daily users, weekly downloads, rating, version | 0, search pays  |
+| cws    | config           | a bucketed user count, rating, version         | 1 page          |
+
+**npm's search index is not a roster.** A deprecated package is dropped from
+`maintainer:` search, which is silent in both directions: one deprecated before it was
+ever seen never appears, and one deprecated afterwards keeps its last snapshot and ages
+into stale with no explanation. Discovery therefore reads the ownership list at
+`/-/user/<account>/package`, the same one `npm access list packages` prints, and uses
+search only for the hits it can hand a fetch. A hit carries version, publish date and the
+repository link, so those packages cost one request; a name only the roster knows pays for
+its packument, and is by that fact deprecated. A roster that cannot be read degrades to
+search alone rather than emptying the portfolio.
 
 **The Chrome Web Store is the one source with no API.** Its published API manages items
 and exposes no metrics, and the developer dashboard's numbers never leave the browser, so
@@ -181,10 +191,11 @@ carries its own sign, so `NO_COLOR` loses the colour and none of the reading.
 
 Every key is optional and the tool works with no config at all.
 
-`includeArchived` and `includeForks` govern what the derived state keeps, not what refresh
-fetches. An archived repo and a fork are still snapshotted on every refresh, so flipping
-either key back on is free and an unarchive is noticed on its own. Filtering at discovery
-instead would leave those targets frozen in the log and reported stale forever.
+`includeArchived`, `includeForks` and `includeDeprecated` govern what the derived state
+keeps, not what refresh fetches. An archived repo, a fork and a deprecated package are
+still snapshotted on every refresh, so flipping any of them back on is free and a
+retirement being undone is noticed on its own. Filtering at discovery instead would leave
+those targets frozen in the log and reported stale forever.
 
 ```jsonc
 {
@@ -192,6 +203,7 @@ instead would leave those targets frozen in the log and reported stale forever.
   "exclude": ["npm:some-experiment"],
   "include": ["pypi:thing-discovery-missed", "cws:hjagmapcdgdffjbbedipfoocmkmhbjeh"],
   "includeArchived": false,
+  "includeDeprecated": false,
   "includeForks": false,
   "links": { "npm:@shbernal/gitpulse": ["gh:shbernal/gitpulse"] },
   // A Chrome listing names no repository, so its link is the one case config must supply.

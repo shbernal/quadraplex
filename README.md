@@ -50,12 +50,15 @@ Config lives at `~/.local/share/quadraplex/config.json` and every key is optiona
   "accounts": { "npm": "you", "pypi": "you", "github": "you", "amo": "123456" },
   "include": ["pypi:your-package", "cws:your32letterextensionid"],
   "includeArchived": false,
+  "includeDeprecated": false,
   "includeForks": false,
 }
 ```
 
-Archived repos and forks are left out of every view by default, since neither is something
-you publish. Set either key to `true` to count them again.
+Archived repos, forks and deprecated packages are left out of every view by default, since
+none of them is something you publish. Set the matching key to `true` to count them again.
+They keep being measured either way, so undoing a retirement brings the target back on its
+own.
 
 In the dashboard, `/` filters, `e` scopes the list to one store, `s` cycles the sort and
 `c` clears all three. `enter` opens a project, `o` opens the thing under the cursor in a

@@ -26,8 +26,8 @@ Each entry carries `id`, `ecosystem`, `name`, `url`, `metrics`, `deltas`,
 `deltaBaselineAt`, `links`, `fetchedAt` and `stale`. The file itself carries
 `schemaVersion`, which is `2`.
 
-Archived repos and forks are absent unless `includeArchived` or `includeForks` is set in
-config. Treat the portfolio as the projects the user actively publishes, not as a listing
+Archived repos, forks and deprecated packages are absent unless `includeArchived`,
+`includeForks` or `includeDeprecated` is set in config. Treat the portfolio as the projects the user actively publishes, not as a listing
 of their GitHub account.
 
 ## Then the compact index

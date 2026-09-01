@@ -8,6 +8,7 @@ export type Config = {
   exclude: string[]
   include: string[]
   includeArchived: boolean
+  includeDeprecated: boolean
   includeForks: boolean
   links: Record<string, string[]>
   ttl: Record<Ecosystem | 'curves', string>
@@ -26,6 +27,7 @@ export const DEFAULT_CONFIG: Config = {
   exclude: [],
   include: [],
   includeArchived: false,
+  includeDeprecated: false,
   includeForks: false,
   links: {},
   ttl: { npm: '24h', pypi: '24h', github: '1h', amo: '24h', cws: '24h', curves: '30d' },
@@ -46,6 +48,7 @@ export function loadConfig(): Config {
     exclude: user.exclude ?? [],
     include: user.include ?? [],
     includeArchived: user.includeArchived ?? false,
+    includeDeprecated: user.includeDeprecated ?? false,
     includeForks: user.includeForks ?? false,
     links: user.links ?? {},
     ttl: { ...DEFAULT_CONFIG.ttl, ...user.ttl },
@@ -57,15 +60,18 @@ export function loadConfig(): Config {
 }
 
 /**
- * An archived repo and a fork are not things you publish, so they are dropped from the
- * derived state rather than from discovery. They keep being fetched, which means an
- * unarchive is picked up by the next refresh instead of leaving a target frozen in the
- * log and reported stale forever.
+ * An archived repo, a fork and a deprecated package are not things you publish, so they
+ * are dropped from the derived state rather than from discovery. They keep being fetched,
+ * which means a retirement being undone is picked up by the next refresh instead of
+ * leaving a target frozen in the log and reported stale forever.
  */
 export function hidden(
   config: Config,
   snapshot: { ecosystem: Ecosystem; metrics: Record<string, unknown> },
 ): boolean {
+  if (snapshot.ecosystem === 'npm') {
+    return !config.includeDeprecated && snapshot.metrics.deprecated === 'yes'
+  }
   if (snapshot.ecosystem !== 'github') return false
   if (!config.includeArchived && snapshot.metrics.archived === 'yes') return true
   if (!config.includeForks && snapshot.metrics.fork === 'yes') return true

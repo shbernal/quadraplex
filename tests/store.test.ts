@@ -146,3 +146,20 @@ test('the archived and fork flags only ever hide github targets', () => {
   appendSnapshots([snap('npm:a', NOW, { downloadsWeek: 1, archived: 'yes', fork: 'yes' })])
   expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual(['npm:a'])
 })
+
+test('deprecated packages are dropped from state.json, and config puts them back', () => {
+  appendSnapshots([
+    snap('npm:live', NOW, { downloadsWeek: 1, deprecated: 'no' }),
+    snap('npm:retired', NOW, { downloadsWeek: 2, deprecated: 'yes' }),
+    // A repo carrying the flag is not a package, so it is unaffected by it.
+    snap('gh:o/repo', NOW, { stars: 1, deprecated: 'yes', archived: 'no', fork: 'no' }),
+  ])
+  expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual(['gh:o/repo', 'npm:live'])
+
+  writeFileSync(paths.config, JSON.stringify({ includeDeprecated: true }))
+  expect(deriveState(loadConfig(), NOW).targets.map((t) => t.id)).toEqual([
+    'gh:o/repo',
+    'npm:live',
+    'npm:retired',
+  ])
+})
