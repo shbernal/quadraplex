@@ -41,16 +41,16 @@
   },
   "dependencies": {
     "ink": "^7.1.1",
-    "react": "^19.2.8"
+    "react": "^19.3.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.0",
-    "@types/react": "^19.2.18",
+    "@types/bun": "^1.4.2",
+    "@types/react": "^19.3.0",
     "charcheck": "^0.4.0",
-    "lefthook": "^2.1.12",
-    "oxfmt": "^0.65.0",
-    "oxlint": "^1.80.0",
-    "oxlint-tsgolint": "^7.0.2001",
+    "lefthook": "^2.1.14",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "typescript": "^7.0.2"
   },
   "engines": {
