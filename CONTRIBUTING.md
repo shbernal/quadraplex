@@ -5,14 +5,13 @@ Issues and pull requests are welcome, including fully AI-generated ones.
 ## AI disclosure
 
 If AI wrote part of a contribution, say so in the issue or pull request body, and name the
-harness and the model. That is the whole requirement. There is no penalty attached to it,
+harness and the model. Commit messages carry no AI attribution. That is the whole requirement. There is no penalty attached to it,
 and the project itself is AI-generated.
 
 ## Setup
 
 ```sh
 bun install
-bun run lefthook install
 ```
 
 ## Checks
@@ -21,7 +20,7 @@ bun run lefthook install
 bun test
 bun run typecheck
 bun run lint
-bun run knip           # unused files and exports, too slow for the commit hook
+bun run knip           # unused files and exports
 bun run format
 bun run build          # bundles for node, which is what npm ships
 ```
@@ -57,8 +56,9 @@ handle has no account on is skipped, not failed. With [VHS](https://github.com/c
 installed it also records the first run, the handle typed into the GitHub row through to
 the dashboard, as text in `dist/first-run.txt`.
 
-The pre-commit hook runs the same checks on staged files, plus a prose check on the
-documents a user reads and a block on AI attribution lines in commit messages.
+There are no git hooks. CI runs every check above on each pull request, plus `bun run prose`
+on the documents a user reads, and rejects AI attribution lines in commit messages: the
+disclosure belongs in the pull request body, never in a commit.
 
 ## Layout
 
