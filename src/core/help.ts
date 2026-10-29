@@ -17,6 +17,7 @@ Usage
   qplex jsr <@scope/pkg>       one JSR package
   qplex packagist <vendor/pkg> one PHP package on Packagist, alias composer
   qplex nuget <id>             one .NET package on NuGet
+  qplex crates <crate>         one Rust crate on crates.io, alias cargo
   qplex amo <slug>             one Firefox add-on
   qplex cws <id>               one Chrome extension
   qplex clawhub <slug>         one ClawHub skill
@@ -35,6 +36,7 @@ Ecosystems
   jsr                          JSR packages, jsr.io
   packagist, composer           PHP packages, Packagist
   nuget                        .NET packages, NuGet
+  crates, cargo                Rust crates, crates.io
   amo                          Firefox add-ons, addons.mozilla.org
   cws                          Chrome extensions, Chrome Web Store
   clawhub                      agent skills published on ClawHub

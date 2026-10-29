@@ -94,6 +94,7 @@ type Target = {
     | 'aur'
     | 'packagist'
     | 'nuget'
+    | 'crates'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -125,6 +126,7 @@ log and the clock.
 | jsr       | scope listing     | daily downloads, version, score, runtimes, repo link   | 2 requests      |
 | packagist | vendor listing    | daily downloads, total, favers, dependents, version    | 2 requests      |
 | nuget     | owner search      | lifetime downloads, version, verified prefix           | 1 request       |
+| crates    | user's crates     | daily downloads, lifetime total, version, repo link    | 1 request, 1/s  |
 | amo       | author id search  | daily users, weekly downloads, rating, version         | 0, search pays  |
 | cws       | search, verified  | a bucketed user count, rating, version                 | 1 page          |
 | clawhub   | publisher roster  | lifetime installs, downloads, stars, version           | 1 request       |
@@ -154,6 +156,16 @@ first word of its prerelease part, so `0.2.2-next.5.g8622dc3` is `next`.
 **An unpublished npm package simply vanishes.** It leaves the roster and search at once,
 and its packument and download range both answer 404, with no tombstone document left
 behind. Observed by unpublishing `@shbernal/tiny-slug` on 2026-10-02.
+
+**crates.io allows one request per second.** That is its crawler policy, so every request
+to it takes the next free one-second slot whatever the concurrency, and a portfolio of a
+few hundred crates spends minutes of the run's deadline. A crates.io login is a GitHub
+login: discovery resolves it to a user id and pages `/api/v1/crates?user_id=`, whose
+entries already carry lifetime downloads, the default version and `updated_at`, which
+only a publish moves, so it stands for `lastPublish`. Each crate then pays for its
+downloads table, 90 days per version and the rest folded together, which is summed per
+day with the day in progress dropped. A crate with every version yanked reads as
+deprecated.
 
 **PyPI's roster is XML-RPC.** The JSON API has no packages-by-user endpoint and the profile
 page sits behind a JavaScript challenge, so discovery calls `user_packages`, one of the
@@ -294,6 +306,7 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | jsr       | 24h | download data is daily                       |
 | packagist | 24h | download stats are daily                     |
 | nuget     | 24h | downloads are a lifetime count               |
+| crates    | 24h | download data is daily                       |
 | cws       | 24h | the published user count is a daily bucket   |
 | clawhub   | 24h | installs are a slow, lifetime count          |
 | vscode    | 24h | installs are a lifetime count                |
@@ -315,7 +328,7 @@ later snapshot without the field, from discovery finding it again, revives it. I
 in the log, so rebuilding the derived files keeps it.
 
 What counts as proof depends on the source. Absence from a roster that answered in full,
-npm, PyPI, GitHub, AMO or the AUR, settles it without a request, and covers a transfer as well as
+npm, PyPI, crates.io, GitHub, AMO or the AUR, settles it without a request, and covers a transfer as well as
 a deletion. A Chrome search or the GHCR packages tab can miss, so a known target missing from one is
 fetched, and so is every `include` entry. Only the target's own resource answering 404, a store
 page with no listing, or a discovered extension now offered by someone else retires it.
@@ -325,8 +338,8 @@ carry forward as stale.
 ## Linking targets across ecosystems
 
 A published package and its repo are one project to a human. The link is derived from
-source metadata, `repository` on npm and Packagist, `project_urls` on PyPI, `projectUrl` on
-NuGet, `homepage` on AMO and the upstream `URL` on the AUR, stored
+source metadata, `repository` on npm, crates.io and Packagist, `project_urls` on PyPI, `projectUrl`
+on NuGet, `homepage` on AMO and the upstream `URL` on the AUR, stored
 in `links`, and overridable in config. A Chrome Web Store listing publishes no repository
 field at all, so a `cws:` target offered by the account links to the account's repo named
 like its store slug, which is its title lowercased and hyphenated, and config overrides
@@ -339,7 +352,7 @@ a store that already has history is painful, so it is in from the start.
 ## The dashboard's panes
 
 The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, JSR, PyPI,
-RubyGems, Packagist, NuGet, GHCR, Docker Hub and the AUR) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
+RubyGems, crates.io, Packagist, NuGet, GHCR, Docker Hub and the AUR) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
 pane has its own columns instead of one table with half its cells blank. A project is
 filed in every pane it has a target in, so a package with a repo shows its downloads in
 the registries pane and its stars in the GitHub pane. The project key ties those rows
@@ -411,6 +424,7 @@ those targets frozen in the log and reported stale forever.
     "jsr": "shbernal", // a scope, without the @
     "packagist": "shbernal", // the vendor before the slash
     "nuget": "shbernal",
+    "crates": "shbernal", // a GitHub login
     "amo": "20068285",
     "cws": "shbernal", // the listing's "Offered by" name
     "vscode": "shbernal", // the Marketplace publisher id
@@ -435,6 +449,7 @@ those targets frozen in the log and reported stale forever.
     "jsr": "24h",
     "packagist": "24h",
     "nuget": "24h",
+    "crates": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",
@@ -454,6 +469,7 @@ those targets frozen in the log and reported stale forever.
     "jsr": "24h",
     "packagist": "24h",
     "nuget": "24h",
+    "crates": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",

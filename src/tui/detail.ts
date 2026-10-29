@@ -128,6 +128,7 @@ function icon(ecosystem: Ecosystem): Line {
     aur: [seg(G.aur, C.aur)],
     packagist: [seg(G.packagist, C.packagist)],
     nuget: [seg(G.nuget, C.nuget)],
+    crates: [seg(G.crates, C.crates)],
     cws: [seg(G.chrome, C.chrome)],
     amo: [seg(G.firefox, C.firefox)],
     clawhub: [seg(G.clawhub, C.clawhub)],

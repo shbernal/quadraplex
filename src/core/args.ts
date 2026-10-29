@@ -24,6 +24,7 @@ const VALUE_FLAGS = new Set([
   'aur',
   'packagist',
   'nuget',
+  'crates',
 ])
 
 export function parseArgv(argv: string[]): Parsed {

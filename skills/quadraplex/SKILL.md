@@ -1,12 +1,12 @@
 ---
 name: quadraplex
-description: Read portfolio state for the npm, JSR, PyPI, Packagist, NuGet and AUR packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
+description: Read portfolio state for the npm, JSR, PyPI, Packagist, NuGet and AUR packages, Ruby gems, Rust crates, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
 ---
 
 # quadraplex
 
 A local store of everything the user publishes: npm, JSR, PyPI, Packagist, NuGet and AUR packages, Ruby gems,
-container images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
+Rust crates on crates.io, container images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
 deltas measured against a time anchored baseline.
 
 The store is already on disk. Your job is to read it, not to rebuild it.
@@ -57,6 +57,7 @@ qplex rubygems some-gem --json
 qplex jsr @shbernal/slug --json
 qplex packagist shbernal/some-lib --json
 qplex nuget shbernal.somelib --json
+qplex crates serde --json
 qplex amo rebobinate --json
 qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 qplex clawhub rfc-lookup --json
@@ -130,7 +131,8 @@ so its delta is the only rate. A `ghcr:` image has a per-day series, but its
 `downloadsMonth` covers 29 days because the page's chart includes today, which is dropped.
 A `dockerhub:` image has only `downloadsTotal`, lifetime pulls with no series, so its
 delta is the only rate. It names no repo; the dashboard joins it to the ghcr.io image or
-repo of the same name.
+repo of the same name. A `crates:` crate has a per-day series like npm, plus
+`downloadsTotal`, its lifetime count, and reads as deprecated once every version is yanked.
 
 **A `rubygems:` gem has no per-day series either.** `downloadsTotal` counts every version
 for all time and `downloadsVersion` only the current one, so their deltas are the only

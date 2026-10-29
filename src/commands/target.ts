@@ -51,6 +51,8 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   packagist: 'packagist',
   composer: 'packagist',
   nuget: 'nuget',
+  crates: 'crates',
+  cargo: 'crates',
 }
 
 /**

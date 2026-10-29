@@ -31,6 +31,7 @@ export const REGISTRIES: Ecosystem[] = [
   'rubygems',
   'jsr',
   'aur',
+  'crates',
 ]
 
 /** A score and the number of ratings behind it, from whichever store has the most. */

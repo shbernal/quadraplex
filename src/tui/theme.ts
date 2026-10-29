@@ -29,6 +29,7 @@ export const C = {
   aur: named('#1793d1'),
   packagist: named('#f28d1a'),
   nuget: named('#5a9bd5'),
+  crates: named('#dea584'),
   chrome: named('green'),
   firefox: named('#ff7139'),
   clawhub: named('#e5484d'),

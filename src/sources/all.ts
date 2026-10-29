@@ -15,6 +15,7 @@ import { openvsxSource } from './openvsx.ts'
 import { aurSource } from './aur.ts'
 import { packagistSource } from './packagist.ts'
 import { nugetSource } from './nuget.ts'
+import { cratesSource } from './crates.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
@@ -32,6 +33,7 @@ export const sources: Partial<Record<Ecosystem, Source>> = {
   aur: aurSource,
   packagist: packagistSource,
   nuget: nugetSource,
+  crates: cratesSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {
