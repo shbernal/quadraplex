@@ -123,6 +123,7 @@ function icon(ecosystem: Ecosystem): Line {
     pypi: [seg(G.pypi, C.pypi)],
     ghcr: [seg(G.ghcr, C.ghcr)],
     dockerhub: [seg(G.dockerhub, C.dockerhub)],
+    rubygems: [seg(G.rubygems, C.rubygems)],
     cws: [seg(G.chrome, C.chrome)],
     amo: [seg(G.firefox, C.firefox)],
     clawhub: [seg(G.clawhub, C.clawhub)],

@@ -1,6 +1,15 @@
 export const SCHEMA_VERSION = 2
 
-export type Ecosystem = 'npm' | 'pypi' | 'github' | 'ghcr' | 'amo' | 'cws' | 'clawhub' | 'dockerhub'
+export type Ecosystem =
+  | 'npm'
+  | 'pypi'
+  | 'github'
+  | 'ghcr'
+  | 'amo'
+  | 'cws'
+  | 'clawhub'
+  | 'dockerhub'
+  | 'rubygems'
 
 export const ECOSYSTEMS: Ecosystem[] = [
   'npm',
@@ -11,14 +20,22 @@ export const ECOSYSTEMS: Ecosystem[] = [
   'cws',
   'clawhub',
   'dockerhub',
+  'rubygems',
 ]
 
 /** How usage errors name the accepted values, aliases included since they are target commands. */
 export const ECOSYSTEM_CHOICES =
-  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker)'
+  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem)'
 
 export function ecosystemNamed(value: unknown): Ecosystem | undefined {
-  const name = value === 'gh' ? 'github' : value === 'docker' ? 'dockerhub' : value
+  const name =
+    value === 'gh'
+      ? 'github'
+      : value === 'docker'
+        ? 'dockerhub'
+        : value === 'gem'
+          ? 'rubygems'
+          : value
   return (ECOSYSTEMS as unknown[]).includes(name) ? (name as Ecosystem) : undefined
 }
 
@@ -140,6 +157,7 @@ export const HEADLINE_METRIC: Record<Ecosystem, string> = {
   cws: 'users',
   clawhub: 'installs',
   dockerhub: 'downloadsTotal',
+  rubygems: 'downloadsTotal',
 }
 
 export function targetId(ecosystem: Ecosystem, name: string): string {

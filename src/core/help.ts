@@ -13,6 +13,7 @@ Usage
   qplex gh <owner/repo>        one GitHub repo
   qplex ghcr <owner/image>     one container image on ghcr.io
   qplex dockerhub <ns/image>   one container image on Docker Hub, alias docker
+  qplex rubygems <gem>         one RubyGems gem, alias gem
   qplex amo <slug>             one Firefox add-on
   qplex cws <id>               one Chrome extension
   qplex clawhub <slug>         one ClawHub skill
@@ -24,6 +25,7 @@ Ecosystems
   github, gh                   GitHub repos, their releases and skills
   ghcr                         container images, ghcr.io
   dockerhub                    container images, Docker Hub
+  rubygems, gem                Ruby gems, RubyGems
   amo                          Firefox add-ons, addons.mozilla.org
   cws                          Chrome extensions, Chrome Web Store
   clawhub                      agent skills published on ClawHub

@@ -8,6 +8,7 @@ import { amoSource } from './amo.ts'
 import { cwsSource } from './cws.ts'
 import { clawhubSource } from './clawhub.ts'
 import { dockerhubSource } from './dockerhub.ts'
+import { rubygemsSource } from './rubygems.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
@@ -18,6 +19,7 @@ export const sources: Partial<Record<Ecosystem, Source>> = {
   cws: cwsSource,
   clawhub: clawhubSource,
   dockerhub: dockerhubSource,
+  rubygems: rubygemsSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {

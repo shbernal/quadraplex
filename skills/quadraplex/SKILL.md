@@ -6,7 +6,7 @@ description: Read portfolio state for the npm packages, PyPI packages, container
 # quadraplex
 
 A local store of everything the user publishes: npm packages, PyPI packages, container
-images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
+Ruby gems, images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
 deltas measured against a time anchored baseline.
 
 The store is already on disk. Your job is to read it, not to rebuild it.
@@ -53,6 +53,7 @@ qplex pypi mcp-server-rfc --json
 qplex gh shbernal/gitpulse --json
 qplex ghcr shbernal/alcatraz --json
 qplex dockerhub shbernal/alcatraz --json
+qplex rubygems some-gem --json
 qplex amo rebobinate --json
 qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 qplex clawhub rfc-lookup --json
@@ -124,6 +125,11 @@ so its delta is the only rate. A `ghcr:` image has a per-day series, but its
 A `dockerhub:` image has only `downloadsTotal`, lifetime pulls with no series, so its
 delta is the only rate. It names no repo; the dashboard joins it to the ghcr.io image or
 repo of the same name.
+
+**A `rubygems:` gem has no per-day series either.** `downloadsTotal` counts every version
+for all time and `downloadsVersion` only the current one, so their deltas are the only
+rates, and `downloadsVersion` restarts near zero on a release. A gem whose versions were all
+yanked is retired.
 
 **`versions` on an `npm:` target splits `downloadsWeek` by version.** A version with a
 prerelease part (`0.3.0-next.4`) belongs to that prerelease track, so summing by track

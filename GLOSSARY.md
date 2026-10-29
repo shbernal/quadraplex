@@ -16,7 +16,7 @@ One publishing platform quadraplex reads, such as npm, PyPI, GitHub or the Chrom
 _Avoid_: platform, provider, store (for the service itself; "Chrome Web Store" and "extension stores" stay as names)
 
 **Registry**:
-A package or container registry ecosystem: npm, PyPI, GHCR or Docker Hub. The registries pane shows exactly these.
+A package or container registry ecosystem: npm, PyPI, RubyGems, GHCR or Docker Hub. The registries pane shows exactly these.
 _Avoid_: registry for any other ecosystem, such as GitHub, AMO, the Chrome Web Store or ClawHub
 
 **Account**:
@@ -123,5 +123,5 @@ The TUI screen that sets one account per ecosystem.
 ## Flagged ambiguities
 
 - "Store" meant both the local data and a publishing service. It now means only the local data; a service is named by its ecosystem, and skills.sh is the index.
-- "Registry" meant both any ecosystem's server and the four package and container registries. It now means only the four.
+- "Registry" meant both any ecosystem's server and the package and container registries. It now means only those.
 - "Retired" was said of projects. Only a target is retired.

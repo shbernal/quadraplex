@@ -20,7 +20,7 @@ import {
 } from '../core/types.ts'
 
 /** The dashboard's registries pane. All but Docker Hub serve per-day downloads. */
-export const REGISTRIES: Ecosystem[] = ['npm', 'pypi', 'ghcr', 'dockerhub']
+export const REGISTRIES: Ecosystem[] = ['npm', 'pypi', 'ghcr', 'dockerhub', 'rubygems']
 
 /** A score and the number of ratings behind it, from whichever store has the most. */
 type Rating = { score: number; count: number; source: Ecosystem }

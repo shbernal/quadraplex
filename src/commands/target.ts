@@ -42,6 +42,8 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   clawhub: 'clawhub',
   dockerhub: 'dockerhub',
   docker: 'dockerhub',
+  rubygems: 'rubygems',
+  gem: 'rubygems',
 }
 
 /**

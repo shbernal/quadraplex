@@ -285,6 +285,7 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
   expect(parseOnly('gh')).toEqual(['github'])
   expect(parseOnly('pypi')).toEqual(['pypi'])
   expect(parseOnly('docker')).toEqual(['dockerhub'])
+  expect(parseOnly('gem')).toEqual(['rubygems'])
   expect(parseOnly(undefined)).toEqual([
     'npm',
     'pypi',
@@ -294,6 +295,7 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
     'cws',
     'clawhub',
     'dockerhub',
+    'rubygems',
   ])
   expect(() => parseOnly('crates')).toThrow('--only takes one of')
   delete sources.cws

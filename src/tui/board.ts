@@ -79,6 +79,7 @@ function sourceIcon(e: Ecosystem): [string, string | undefined] {
     pypi: [G.pypi, C.pypi],
     ghcr: [G.ghcr, C.ghcr],
     dockerhub: [G.dockerhub, C.dockerhub],
+    rubygems: [G.rubygems, C.rubygems],
     cws: [G.chrome, C.chrome],
     amo: [G.firefox, C.firefox],
     clawhub: [G.clawhub, C.clawhub],
@@ -145,6 +146,7 @@ function elsewhere(project: Project, except: Ecosystem[]): Line {
     ['pypi', G.pypi, C.pypi],
     ['ghcr', G.ghcr, C.ghcr],
     ['dockerhub', G.dockerhub, C.dockerhub],
+    ['rubygems', G.rubygems, C.rubygems],
     ['cws', G.chrome, C.chrome],
     ['amo', G.firefox, C.firefox],
     ['clawhub', G.clawhub, C.clawhub],
@@ -330,7 +332,7 @@ function githubPane(
  * Docker Hub counts pulls for all time and nothing per day, so its row shows the total
  * marked Σ and moves by the pulls since the delta baseline, not by a change in the week.
  */
-const lifetime = (t: Target) => t.ecosystem === 'dockerhub'
+const lifetime = (t: Target) => t.ecosystem === 'dockerhub' || t.ecosystem === 'rubygems'
 const rateKey = (t: Target) => (lifetime(t) ? 'downloadsTotal' : 'downloadsWeek')
 
 function registriesPane(
@@ -737,7 +739,17 @@ export function buildBoard(now = Date.now()): Board {
     })
   const all = projects.flatMap((p) => p.targets)
   const baselines = all.map((t) => t.deltaBaselineAt).filter((b): b is string => Boolean(b))
-  const order: Ecosystem[] = ['github', 'npm', 'pypi', 'ghcr', 'dockerhub', 'cws', 'amo', 'clawhub']
+  const order: Ecosystem[] = [
+    'github',
+    'npm',
+    'pypi',
+    'ghcr',
+    'dockerhub',
+    'rubygems',
+    'cws',
+    'amo',
+    'clawhub',
+  ]
   const sources = order.flatMap((ecosystem): Source[] => {
     if (!shown.has(ecosystem)) return []
     const mine = all.filter((t) => t.ecosystem === ecosystem)
