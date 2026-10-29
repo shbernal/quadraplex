@@ -297,6 +297,8 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
     'dockerhub',
     'rubygems',
     'jsr',
+    'vscode',
+    'openvsx',
   ])
   expect(() => parseOnly('crates')).toThrow('--only takes one of')
   delete sources.cws

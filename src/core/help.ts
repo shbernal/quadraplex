@@ -18,6 +18,8 @@ Usage
   qplex amo <slug>             one Firefox add-on
   qplex cws <id>               one Chrome extension
   qplex clawhub <slug>         one ClawHub skill
+  qplex vscode <pub.name>      one VS Code extension on the Visual Studio Marketplace
+  qplex openvsx <ns.name>      one VS Code extension on Open VSX
   qplex completions bash       print a bash completion script
 
 Ecosystems
@@ -31,6 +33,8 @@ Ecosystems
   amo                          Firefox add-ons, addons.mozilla.org
   cws                          Chrome extensions, Chrome Web Store
   clawhub                      agent skills published on ClawHub
+  vscode                       VS Code extensions, Visual Studio Marketplace
+  openvsx                      VS Code extensions, Open VSX
 
 Options
   --json                       machine-readable output

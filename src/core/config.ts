@@ -42,6 +42,8 @@ export const DEFAULT_CONFIG: Config = {
     dockerhub: '24h',
     rubygems: '24h',
     jsr: '24h',
+    vscode: '24h',
+    openvsx: '24h',
     curves: '30d',
     releases: '24h',
   },
@@ -56,6 +58,8 @@ export const DEFAULT_CONFIG: Config = {
     dockerhub: '24h',
     rubygems: '24h',
     jsr: '24h',
+    vscode: '24h',
+    openvsx: '24h',
   },
 }
 

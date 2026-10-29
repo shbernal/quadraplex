@@ -10,6 +10,8 @@ import { clawhubSource } from './clawhub.ts'
 import { dockerhubSource } from './dockerhub.ts'
 import { rubygemsSource } from './rubygems.ts'
 import { jsrSource } from './jsr.ts'
+import { vscodeSource } from './vscode.ts'
+import { openvsxSource } from './openvsx.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
@@ -22,6 +24,8 @@ export const sources: Partial<Record<Ecosystem, Source>> = {
   dockerhub: dockerhubSource,
   rubygems: rubygemsSource,
   jsr: jsrSource,
+  vscode: vscodeSource,
+  openvsx: openvsxSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {

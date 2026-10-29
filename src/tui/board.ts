@@ -84,6 +84,8 @@ function sourceIcon(e: Ecosystem): [string, string | undefined] {
     cws: [G.chrome, C.chrome],
     amo: [G.firefox, C.firefox],
     clawhub: [G.clawhub, C.clawhub],
+    vscode: [G.vscode, C.vscode],
+    openvsx: [G.openvsx, C.openvsx],
   }
   return icons[e]
 }
@@ -151,6 +153,8 @@ function elsewhere(project: Project, except: Ecosystem[]): Line {
     ['jsr', G.jsr, C.jsr],
     ['cws', G.chrome, C.chrome],
     ['amo', G.firefox, C.firefox],
+    ['vscode', G.vscode, C.vscode],
+    ['openvsx', G.openvsx, C.openvsx],
     ['clawhub', G.clawhub, C.clawhub],
   ]
   return icons
@@ -450,15 +454,64 @@ function bucket(t: Target | undefined): Line {
   return typeof users === 'string' ? [seg(`≈${users}`, C.chrome)] : [seg('?', C.muted, { d: true })]
 }
 
+/** Browser extension stores, then editor extension stores. */
+const EXTENSIONS: Ecosystem[] = ['cws', 'amo', 'vscode', 'openvsx']
+
+/**
+ * The editor stores count for all time and nothing per day, so their columns show the
+ * lifetime count marked Σ and move by what was added since the delta baseline.
+ */
+const EDITOR_KEY: Partial<Record<Ecosystem, string>> = {
+  vscode: 'installs',
+  openvsx: 'downloadsTotal',
+}
+
+function editorColumns(e: 'vscode' | 'openvsx', pri: number): Column[] {
+  const [glyph, color] = sourceIcon(e)
+  const key = EDITOR_KEY[e]!
+  const target = (r: Row) => r.targets.find((t) => t.ecosystem === e)
+  return [
+    {
+      head: [seg(glyph, color), seg(' ')],
+      width: 5,
+      pri,
+      cell: (r) => {
+        const t = target(r)
+        return t ? [seg('Σ', C.muted), ...num(t.metrics[key], color)] : [seg('·', C.muted)]
+      },
+    },
+    {
+      head: [seg('Δ', C.muted)],
+      width: 4,
+      pri: pri - 1,
+      cell: (r) => {
+        const t = target(r)
+        return t ? delta(t.deltas ? (t.deltas[key] ?? null) : null) : [seg('·', C.muted)]
+      },
+    },
+  ]
+}
+
+function editorSummary(ts: Target[], e: 'vscode' | 'openvsx'): Line {
+  const mine = ts.filter((t) => t.ecosystem === e)
+  const [glyph, color] = sourceIcon(e)
+  const key = EDITOR_KEY[e]!
+  return [
+    seg(`${glyph} ${mine.length} Σ${compactNumber(sum(mine, key))}`, color),
+    seg(' '),
+    ...delta(sumDelta(mine, key)),
+  ]
+}
+
 function extensionsPane(
   projects: Project[],
   now: number,
   shown: Set<Ecosystem>,
 ): Omit<Pane, 'asOf' | 'ttl' | 'stale'> {
   const rows: Row[] = projects
-    .filter((p) => p.targets.some((t) => t.ecosystem === 'cws' || t.ecosystem === 'amo'))
+    .filter((p) => p.targets.some((t) => EXTENSIONS.includes(t.ecosystem)))
     .map((project) => {
-      const targets = project.targets.filter((t) => t.ecosystem === 'cws' || t.ecosystem === 'amo')
+      const targets = project.targets.filter((t) => EXTENSIONS.includes(t.ecosystem))
       return {
         key: project.key,
         project,
@@ -470,16 +523,20 @@ function extensionsPane(
     })
   const cws = (r: Row) => r.targets.find((t) => t.ecosystem === 'cws')
   const amo = (r: Row) => r.targets.find((t) => t.ecosystem === 'amo')
+  // Each store's count in turn, never summed across units, then the name.
+  const ranks: [Ecosystem, string][] = [
+    ['amo', 'users'],
+    ['vscode', 'installs'],
+    ['openvsx', 'downloadsTotal'],
+  ]
+  const rank = (r: Row, [e, key]: [Ecosystem, string]) =>
+    sum(
+      r.targets.filter((t) => t.ecosystem === e),
+      key,
+    )
   rows.sort(
     (a, b) =>
-      sum(
-        b.targets.filter((t) => t.ecosystem === 'amo'),
-        'users',
-      ) -
-        sum(
-          a.targets.filter((t) => t.ecosystem === 'amo'),
-          'users',
-        ) || a.name.localeCompare(b.name),
+      ranks.reduce((d, k) => d || rank(b, k) - rank(a, k), 0) || a.name.localeCompare(b.name),
   )
   // A store the config leaves out takes its columns and gauge with it, rather than a row of ·.
   const chrome: Column[] = [
@@ -510,6 +567,8 @@ function extensionsPane(
   const columns: Column[] = [
     ...(shown.has('cws') ? chrome : []),
     ...(shown.has('amo') ? firefox : []),
+    ...(shown.has('vscode') ? editorColumns('vscode', 9) : []),
+    ...(shown.has('openvsx') ? editorColumns('openvsx', 8) : []),
     {
       head: [seg('★', C.star)],
       width: 3,
@@ -545,30 +604,36 @@ function extensionsPane(
       width: 3,
       pri: 3,
       left: true,
-      cell: (r) => elsewhere(r.project, ['cws', 'amo']),
+      cell: (r) => elsewhere(r.project, EXTENSIONS),
     },
   ]
   const ts = rows.flatMap((r) => r.targets)
   const ff = ts.filter((t) => t.ecosystem === 'amo')
+  const parts: Line[] = [
+    ...(shown.has('cws')
+      ? [[seg(`${G.chrome} ${ts.filter((t) => t.ecosystem === 'cws').length}`, C.chrome)]]
+      : []),
+    ...(shown.has('amo')
+      ? [
+          [
+            seg(`${G.firefox} ${ff.length} ${G.users} ${sum(ff, 'users')}`, C.firefox),
+            seg(' '),
+            ...delta(sumDelta(ff, 'users')),
+          ],
+        ]
+      : []),
+    ...(shown.has('vscode') ? [editorSummary(ts, 'vscode')] : []),
+    ...(shown.has('openvsx') ? [editorSummary(ts, 'openvsx')] : []),
+  ]
   return {
     id: 'extensions',
     title: 'EXTENSIONS',
     icon: G.puzzle,
     color: C.extensions,
-    sources: ['cws', 'amo'],
+    sources: EXTENSIONS,
     columns,
     rows,
-    summary: [
-      ...(shown.has('cws') ? [seg(`${G.chrome} ${ts.length - ff.length}`, C.chrome)] : []),
-      ...(shown.has('cws') && shown.has('amo') ? [seg('  ')] : []),
-      ...(shown.has('amo')
-        ? [
-            seg(`${G.firefox} ${ff.length} ${G.users} ${sum(ff, 'users')}`, C.firefox),
-            seg(' '),
-            ...delta(sumDelta(ff, 'users')),
-          ]
-        : []),
-    ],
+    summary: parts.flatMap((part, i) => (i ? [seg('  ')] : []).concat(part)),
   }
 }
 
@@ -751,6 +816,8 @@ export function buildBoard(now = Date.now()): Board {
     'jsr',
     'cws',
     'amo',
+    'vscode',
+    'openvsx',
     'clawhub',
   ]
   const sources = order.flatMap((ecosystem): Source[] => {

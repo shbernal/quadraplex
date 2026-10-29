@@ -53,6 +53,8 @@ const NERD = {
   link: '\u{F0C1}',
   skill: '\u{F15C}',
   clawhub: '\u{F03E9}',
+  vscode: '\u{F0A1E}',
+  openvsx: '\u{F0169}',
   /** Spinner frames, one cell each, read in turn. */
   spin: '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏',
 }
@@ -94,6 +96,8 @@ const ASCII: typeof NERD = {
   link: '&',
   skill: 's',
   clawhub: 'H',
+  vscode: 'V',
+  openvsx: 'O',
   spin: '|/-\\',
 }
 

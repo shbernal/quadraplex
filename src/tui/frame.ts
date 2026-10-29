@@ -328,6 +328,8 @@ const legendBlocks = (panes: number): [string, Line[]][] => [
         seg(' users'),
       ],
       [seg('≈1,000', C.chrome), seg(' Google bucket')],
+      [seg(G.vscode, C.vscode), seg(' Marketplace  '), seg(G.openvsx, C.openvsx), seg(' Open VSX')],
+      [seg('Σ', C.muted), seg(' lifetime count')],
       [seg('★', C.star), seg(' rating')],
       [seg('1.0≠1.1', C.warn), seg(' ecosystems disagree')],
     ],

@@ -29,6 +29,8 @@ export const C = {
   chrome: named('green'),
   firefox: named('#ff7139'),
   clawhub: named('#e5484d'),
+  vscode: named('#3b9fe8'),
+  openvsx: named('#c160ef'),
   pr: named('magenta'),
   issue: named('green'),
   cursor: named('#313244'),
