@@ -314,6 +314,7 @@ const legendBlocks = (panes: number): [string, Line[]][] => [
       ],
       [seg(G.download, C.text), seg(' downloads/wk  '), seg(G.calendar, C.muted), seg(' /month')],
       [seg(G.rocket, C.muted), seg(' last publish  '), seg('†', C.down), seg(' deprecated')],
+      [seg('★', C.muted), seg(' AUR votes  '), seg('!', C.warn), seg(' out of date')],
     ],
   ],
   [

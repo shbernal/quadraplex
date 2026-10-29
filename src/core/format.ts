@@ -59,6 +59,7 @@ const LABELS: Record<string, string> = {
   // open_issues_count includes pull requests, and the name says so wherever it is shown.
   openIssuesAndPRs: 'open issues + PRs',
   openPRs: 'open PRs',
+  outOfDate: 'flagged out of date',
   skillInstalls: 'skill installs',
   unreleasedCommits: 'commits since release',
 }

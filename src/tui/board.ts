@@ -81,6 +81,7 @@ function sourceIcon(e: Ecosystem): [string, string | undefined] {
     dockerhub: [G.dockerhub, C.dockerhub],
     rubygems: [G.rubygems, C.rubygems],
     jsr: [G.jsr, C.jsr],
+    aur: [G.aur, C.aur],
     cws: [G.chrome, C.chrome],
     amo: [G.firefox, C.firefox],
     clawhub: [G.clawhub, C.clawhub],
@@ -151,6 +152,7 @@ function elsewhere(project: Project, except: Ecosystem[]): Line {
     ['dockerhub', G.dockerhub, C.dockerhub],
     ['rubygems', G.rubygems, C.rubygems],
     ['jsr', G.jsr, C.jsr],
+    ['aur', G.aur, C.aur],
     ['cws', G.chrome, C.chrome],
     ['amo', G.firefox, C.firefox],
     ['vscode', G.vscode, C.vscode],
@@ -337,9 +339,15 @@ function githubPane(
 /**
  * Docker Hub counts pulls for all time and nothing per day, so its row shows the total
  * marked Σ and moves by the pulls since the delta baseline, not by a change in the week.
+ * The AUR counts no downloads at all, so its row shows lifetime votes the same way.
  */
-const lifetime = (t: Target) => t.ecosystem === 'dockerhub' || t.ecosystem === 'rubygems'
-const rateKey = (t: Target) => (lifetime(t) ? 'downloadsTotal' : 'downloadsWeek')
+const LIFETIME: Partial<Record<Ecosystem, [key: string, mark: string]>> = {
+  dockerhub: ['downloadsTotal', 'Σ'],
+  rubygems: ['downloadsTotal', 'Σ'],
+  aur: ['votes', '★'],
+}
+const lifetime = (t: Target) => LIFETIME[t.ecosystem]
+const rateKey = (t: Target) => lifetime(t)?.[0] ?? 'downloadsWeek'
 
 function registriesPane(
   projects: Project[],
@@ -380,10 +388,12 @@ function registriesPane(
       head: [seg(G.download, C.text)],
       width: 5,
       pri: 9,
-      cell: (r) =>
-        lifetime(r.targets[0]!)
-          ? [seg('Σ', C.muted), ...num(m(r, 'downloadsTotal'), C.text)]
-          : num(m(r, 'downloadsWeek'), C.text),
+      cell: (r) => {
+        const total = lifetime(r.targets[0]!)
+        return total
+          ? [seg(total[1], C.muted), ...num(m(r, total[0]), C.text)]
+          : num(m(r, 'downloadsWeek'), C.text)
+      },
     },
     {
       head: [seg('Δ', C.muted)],
@@ -415,9 +425,11 @@ function registriesPane(
         r.project.drift.versions ? seg('≠', C.warn) : seg(' '),
         m(r, 'deprecated') && m(r, 'deprecated') !== 'no'
           ? seg('†', C.down)
-          : r.project.drift.unreleased
-            ? seg('⇡', C.unreleased)
-            : seg(' '),
+          : m(r, 'outOfDate') && m(r, 'outOfDate') !== 'no'
+            ? seg('!', C.warn)
+            : r.project.drift.unreleased
+              ? seg('⇡', C.unreleased)
+              : seg(' '),
       ],
     },
   ]
@@ -814,6 +826,7 @@ export function buildBoard(now = Date.now()): Board {
     'dockerhub',
     'rubygems',
     'jsr',
+    'aur',
     'cws',
     'amo',
     'vscode',

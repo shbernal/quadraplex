@@ -21,7 +21,7 @@ Monitor your development projects like an evil genius.
 
 ![qplex dashboard demo](docs/assets/demo.gif)
 
-quadraplex collects your npm, JSR and PyPI packages, Ruby gems, ghcr.io and Docker Hub images, browser extensions and GitHub repos into one local store.
+quadraplex collects your npm, JSR, PyPI and AUR packages, Ruby gems, ghcr.io and Docker Hub images, browser extensions and GitHub repos into one local store.
 A terminal dashboard shows each metric against a baseline, and a JSON surface answers agents from the same cache.
 
 Named after the Quadraplex T-3000, the computer that oversees the lab in _Dexter's Laboratory_.
@@ -50,6 +50,7 @@ It reports on the facility. It does not run it.
 | VS Marketplace                                                                                  | VS Code extensions               | your Marketplace publisher id          |
 | Open VSX                                                                                        | VS Code extensions               | your Open VSX namespace                |
 | ClawHub                                                                                         | agent skills                     | your ClawHub publisher handle          |
+| <img src="https://cdn.simpleicons.org/archlinux" alt="" height="16"> AUR                        | packages                         | your AUR username                      |
 
 Anything discovery misses, like an unlisted Chrome extension, goes in the config's `include` list.
 
@@ -113,7 +114,7 @@ npx skills add shbernal/quadraplex
 
 ```mermaid
 flowchart LR
-  R[npm · PyPI · GitHub · ghcr.io · Docker Hub · RubyGems · JSR · AMO · CWS · VS Marketplace · Open VSX] -->|qplex refresh| S[(snapshots.jsonl<br>append-only)]
+  R[npm · PyPI · GitHub · ghcr.io · Docker Hub · RubyGems · JSR · AUR · AMO · CWS · VS Marketplace · Open VSX] -->|qplex refresh| S[(snapshots.jsonl<br>append-only)]
   S --> D[derived state]
   D --> T[dashboard]
   D --> J[status / list --json]

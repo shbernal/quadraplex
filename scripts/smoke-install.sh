@@ -45,7 +45,7 @@ run() {
   printf '%s\n%s\n' "$PRELUDE" "$2" | docker run --rm -i \
     -e QPLEX_SMOKE_HANDLE -e QPLEX_SMOKE_NPM -e QPLEX_SMOKE_PYPI \
     -e QPLEX_SMOKE_AMO -e QPLEX_SMOKE_CWS -e QPLEX_SMOKE_RUBYGEMS -e QPLEX_SMOKE_JSR \
-    -e QPLEX_SMOKE_VSCODE -e QPLEX_SMOKE_OPENVSX \
+    -e QPLEX_SMOKE_VSCODE -e QPLEX_SMOKE_OPENVSX -e QPLEX_SMOKE_AUR \
     "$IMAGE" bash -s
   echo "   ok"
 }
@@ -72,7 +72,7 @@ $(seeded git)"
 
 run scripted '
 flags=(--github "$H")
-for e in npm pypi amo cws rubygems jsr vscode openvsx; do
+for e in npm pypi amo cws rubygems jsr vscode openvsx aur; do
   var="QPLEX_SMOKE_${e^^}"
   if [[ -n "${!var:-}" ]]; then flags+=("--$e" "${!var}"); fi
 done

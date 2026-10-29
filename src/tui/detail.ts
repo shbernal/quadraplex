@@ -125,6 +125,7 @@ function icon(ecosystem: Ecosystem): Line {
     dockerhub: [seg(G.dockerhub, C.dockerhub)],
     rubygems: [seg(G.rubygems, C.rubygems)],
     jsr: [seg(G.jsr, C.jsr)],
+    aur: [seg(G.aur, C.aur)],
     cws: [seg(G.chrome, C.chrome)],
     amo: [seg(G.firefox, C.firefox)],
     clawhub: [seg(G.clawhub, C.clawhub)],

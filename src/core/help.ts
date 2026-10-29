@@ -20,6 +20,7 @@ Usage
   qplex clawhub <slug>         one ClawHub skill
   qplex vscode <pub.name>      one VS Code extension on the Visual Studio Marketplace
   qplex openvsx <ns.name>      one VS Code extension on Open VSX
+  qplex aur <pkg>              one AUR package
   qplex completions bash       print a bash completion script
 
 Ecosystems
@@ -35,6 +36,7 @@ Ecosystems
   clawhub                      agent skills published on ClawHub
   vscode                       VS Code extensions, Visual Studio Marketplace
   openvsx                      VS Code extensions, Open VSX
+  aur                          Arch User Repository packages
 
 Options
   --json                       machine-readable output

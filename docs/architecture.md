@@ -91,6 +91,7 @@ type Target = {
     | 'jsr'
     | 'vscode'
     | 'openvsx'
+    | 'aur'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -125,6 +126,7 @@ log and the clock.
 | clawhub   | publisher roster  | lifetime installs, downloads, stars, version           | 1 request       |
 | vscode    | publisher query   | lifetime installs, rating, version                     | 0, query pays   |
 | openvsx   | namespace roster  | lifetime downloads, rating, version                    | 1 request       |
+| aur       | maintainer search | votes, popularity, version, out-of-date, repo link     | 0, search pays  |
 
 **npm's search index is not a roster.** A deprecated package is dropped from
 `maintainer:` search, which is silent in both directions: one deprecated before it was
@@ -276,6 +278,7 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | clawhub   | 24h | installs are a slow, lifetime count          |
 | vscode    | 24h | installs are a lifetime count                |
 | openvsx   | 24h | downloads are a lifetime count               |
+| aur       | 24h | popularity decays once a day                 |
 | curves    | 30d | star history is immutable except at the tail |
 | releases  | 24h | reread sooner when the repo was pushed since |
 
@@ -292,7 +295,7 @@ later snapshot without the field, from discovery finding it again, revives it. I
 in the log, so rebuilding the derived files keeps it.
 
 What counts as proof depends on the source. Absence from a roster that answered in full,
-npm, PyPI, GitHub or AMO, settles it without a request, and covers a transfer as well as
+npm, PyPI, GitHub, AMO or the AUR, settles it without a request, and covers a transfer as well as
 a deletion. A Chrome search or the GHCR packages tab can miss, so a known target missing from one is
 fetched, and so is every `include` entry. Only the target's own resource answering 404, a store
 page with no listing, or a discovered extension now offered by someone else retires it.
@@ -302,7 +305,8 @@ carry forward as stale.
 ## Linking targets across ecosystems
 
 A published package and its repo are one project to a human. The link is derived from
-source metadata, `repository` on npm, `project_urls` on PyPI and `homepage` on AMO, stored
+source metadata, `repository` on npm, `project_urls` on PyPI, `homepage` on AMO and the
+upstream `URL` on the AUR, stored
 in `links`, and overridable in config. A Chrome Web Store listing publishes no repository
 field at all, so a `cws:` target offered by the account links to the account's repo named
 like its store slug, which is its title lowercased and hyphenated, and config overrides
@@ -315,7 +319,7 @@ a store that already has history is painful, so it is in from the start.
 ## The dashboard's panes
 
 The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, JSR, PyPI,
-RubyGems, GHCR and Docker Hub) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
+RubyGems, GHCR, Docker Hub and the AUR) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
 pane has its own columns instead of one table with half its cells blank. A project is
 filed in every pane it has a target in, so a package with a repo shows its downloads in
 the registries pane and its stars in the GitHub pane. The project key ties those rows
@@ -390,6 +394,7 @@ those targets frozen in the log and reported stale forever.
     "vscode": "shbernal", // the Marketplace publisher id
     "openvsx": "shbernal", // the Open VSX namespace
     "clawhub": "shbernal",
+    "aur": "shbernal",
   },
   "exclude": ["npm:some-experiment"],
   "include": ["cws:abcdefghijklmnopabcdefghijklmnop"],
@@ -411,6 +416,7 @@ those targets frozen in the log and reported stale forever.
     "clawhub": "24h",
     "vscode": "24h",
     "openvsx": "24h",
+    "aur": "24h",
     "curves": "30d",
     "releases": "24h",
   },
@@ -427,6 +433,7 @@ those targets frozen in the log and reported stale forever.
     "clawhub": "24h",
     "vscode": "24h",
     "openvsx": "24h",
+    "aur": "24h",
   },
 }
 ```

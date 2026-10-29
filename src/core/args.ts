@@ -21,6 +21,7 @@ const VALUE_FLAGS = new Set([
   'jsr',
   'vscode',
   'openvsx',
+  'aur',
 ])
 
 export function parseArgv(argv: string[]): Parsed {
