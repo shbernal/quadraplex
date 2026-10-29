@@ -92,3 +92,19 @@ test('a Docker Hub image joins the ghcr.io image of its name, or else the repo o
     ['dockerhub:me/sandbox', 'gh:me/sandbox'],
   ])
 })
+
+test('a JSR package with no repo joins the npm package of its name', () => {
+  store(
+    [
+      snap('npm:@me/slug', 'npm', { downloadsWeek: 3 }),
+      snap('jsr:@me/slug', 'jsr', { downloadsWeek: 1 }),
+      snap('jsr:@me/lonely', 'jsr', { downloadsWeek: 0 }),
+    ],
+    { accounts: { npm: 'me', jsr: 'me' } },
+  )
+  const ids = buildProjects().map((p) => p.targets.map((t) => t.id).toSorted())
+  expect(ids.toSorted((a, b) => a[0]!.localeCompare(b[0]!))).toEqual([
+    ['jsr:@me/lonely'],
+    ['jsr:@me/slug', 'npm:@me/slug'],
+  ])
+})

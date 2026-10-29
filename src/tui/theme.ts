@@ -25,6 +25,7 @@ export const C = {
   ghcr: named('magenta'),
   dockerhub: named('#1d63ed'),
   rubygems: named('#e9573f'),
+  jsr: named('#f7df1e'),
   chrome: named('green'),
   firefox: named('#ff7139'),
   clawhub: named('#e5484d'),

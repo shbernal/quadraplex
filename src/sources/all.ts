@@ -9,6 +9,7 @@ import { cwsSource } from './cws.ts'
 import { clawhubSource } from './clawhub.ts'
 import { dockerhubSource } from './dockerhub.ts'
 import { rubygemsSource } from './rubygems.ts'
+import { jsrSource } from './jsr.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
@@ -20,6 +21,7 @@ export const sources: Partial<Record<Ecosystem, Source>> = {
   clawhub: clawhubSource,
   dockerhub: dockerhubSource,
   rubygems: rubygemsSource,
+  jsr: jsrSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {

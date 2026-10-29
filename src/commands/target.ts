@@ -44,6 +44,7 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   docker: 'dockerhub',
   rubygems: 'rubygems',
   gem: 'rubygems',
+  jsr: 'jsr',
 }
 
 /**

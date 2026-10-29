@@ -1,11 +1,11 @@
 ---
 name: quadraplex
-description: Read portfolio state for the npm packages, PyPI packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
+description: Read portfolio state for the npm, JSR and PyPI packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
 ---
 
 # quadraplex
 
-A local store of everything the user publishes: npm packages, PyPI packages, container
+A local store of everything the user publishes: npm, JSR and PyPI packages, container
 Ruby gems, images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
 deltas measured against a time anchored baseline.
 
@@ -54,6 +54,7 @@ qplex gh shbernal/gitpulse --json
 qplex ghcr shbernal/alcatraz --json
 qplex dockerhub shbernal/alcatraz --json
 qplex rubygems some-gem --json
+qplex jsr @shbernal/slug --json
 qplex amo rebobinate --json
 qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 qplex clawhub rfc-lookup --json
@@ -130,6 +131,10 @@ repo of the same name.
 for all time and `downloadsVersion` only the current one, so their deltas are the only
 rates, and `downloadsVersion` restarts near zero on a release. A gem whose versions were all
 yanked is retired.
+**A `jsr:` package carries `score`, `runtimes` and `dependents` beside its downloads.**
+`score` is JSR's 0 to 100 package quality score, `runtimes` the comma-separated runtimes
+it declares (`browser,bun,deno,node,workerd`), `null` when none. Its downloads sum registry
+reads and npm compatibility tarballs over a 90-day series.
 
 **`versions` on an `npm:` target splits `downloadsWeek` by version.** A version with a
 prerelease part (`0.3.0-next.4`) belongs to that prerelease track, so summing by track

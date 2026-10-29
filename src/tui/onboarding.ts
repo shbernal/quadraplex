@@ -50,6 +50,7 @@ export const ROW_ORDER: Ecosystem[] = [
   'amo',
   'cws',
   'clawhub',
+  'jsr',
 ]
 
 type Meta = { label: string; icon: string; color: string | undefined; help: string }
@@ -76,6 +77,12 @@ const meta = (e: Ecosystem): Meta =>
       help: 'Your Docker Hub username, the namespace your images live under.',
     },
     npm: { label: 'npm', icon: G.npm, color: C.npm, help: 'Your npm username.' },
+    jsr: {
+      label: 'JSR',
+      icon: G.jsr,
+      color: C.jsr,
+      help: 'Your JSR scope, without the @. JSR cannot look a user up by login.',
+    },
     pypi: { label: 'PyPI', icon: G.pypi, color: C.pypi, help: 'Your PyPI username.' },
     rubygems: {
       label: 'RubyGems',
