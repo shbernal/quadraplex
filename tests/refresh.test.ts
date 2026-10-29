@@ -303,8 +303,10 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
     'aur',
     'packagist',
     'nuget',
+    'crates',
   ])
-  expect(() => parseOnly('crates')).toThrow('--only takes one of')
+  expect(parseOnly('cargo')).toEqual(['crates'])
+  expect(() => parseOnly('nope')).toThrow('--only takes one of')
   delete sources.cws
   expect(() => parseOnly('cws')).toThrow(UsageError)
 })

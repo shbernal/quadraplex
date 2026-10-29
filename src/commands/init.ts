@@ -93,6 +93,7 @@ const PROBES: Record<Ecosystem, (account: string) => Promise<Found>> = {
   aur: (account) => discovered('aur', account),
   packagist: (account) => discovered('packagist', account),
   nuget: (account) => discovered('nuget', account),
+  crates: (account) => discovered('crates', account),
   github: async (account) => ({ count: await publicRepos(account) }),
   amo: async (account) => {
     const found = await findAccount(account)
@@ -159,6 +160,7 @@ const NOUN: Record<Ecosystem, string> = {
   aur: 'package',
   packagist: 'package',
   nuget: 'package',
+  crates: 'crate',
 }
 
 /** What a probe found, in the words a suggestion row shows. */

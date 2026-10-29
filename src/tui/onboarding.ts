@@ -49,6 +49,7 @@ export const ROW_ORDER: Ecosystem[] = [
   'rubygems',
   'packagist',
   'nuget',
+  'crates',
   'amo',
   'cws',
   'vscode',
@@ -112,6 +113,12 @@ const meta = (e: Ecosystem): Meta =>
       icon: G.nuget,
       color: C.nuget,
       help: "Your NuGet username, as listed under a package's owners.",
+    },
+    crates: {
+      label: 'crates.io',
+      icon: G.crates,
+      color: C.crates,
+      help: 'Your crates.io login, which is your GitHub login.',
     },
     amo: {
       label: 'Firefox add-ons',
@@ -207,7 +214,15 @@ function progressLine(p: Progress, tick: number): Line {
   ]
 }
 
-function body(view: OnboardingView, inner: number): Line[] {
+/** The account rows that fit in `room` lines, scrolled to keep the cursor in view. */
+function rowWindow(view: OnboardingView, room: number): number[] {
+  const n = view.rows.length
+  const size = Math.max(1, Math.min(n, room))
+  const start = Math.min(Math.max(0, view.cursor - Math.floor(size / 2)), n - size)
+  return Array.from({ length: size }, (_, i) => start + i)
+}
+
+function body(view: OnboardingView, inner: number, height: number): Line[] {
   if (view.progress) {
     return [
       [seg('Saved. Running the first refresh.', C.text)],
@@ -223,10 +238,12 @@ function body(view: OnboardingView, inner: number): Line[] {
   const help = current
     ? meta(current.ecosystem).help
     : 'Writes the config, then runs the first refresh.'
+  const fixed = view.notice ? 8 : 6
+  const shown = rowWindow(view, height - fixed)
   const lines: Line[] = [
     [seg(intro, C.text)],
     [],
-    ...view.rows.map((row, i) => accountLine(row, view, i, inner)),
+    ...shown.map((i) => accountLine(view.rows[i]!, view, i, inner)),
     [],
     [seg(`  ${help}`, C.muted, { i: true })],
     [],
@@ -266,8 +283,13 @@ export function onboardingFrame(view: OnboardingView, cols: number, rows: number
   const head = fit([...brand, seg(`  ${title}`, C.muted)], cols)
   const w = Math.min(cols, 100)
   const inner = w - 4
-  const card = box([seg(`${G.users} ACCOUNTS`, C.accent, { b: true })], body(view, inner), w, [])
   const space = rows - 2
+  const card = box(
+    [seg(`${G.users} ACCOUNTS`, C.accent, { b: true })],
+    body(view, inner, space - 2),
+    w,
+    [],
+  )
   const shown = card.slice(0, space)
   const top = Math.max(0, Math.floor((space - shown.length) / 2))
   const left = Math.max(0, Math.floor((cols - w) / 2))

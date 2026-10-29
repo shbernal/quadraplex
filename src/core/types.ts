@@ -16,6 +16,7 @@ export type Ecosystem =
   | 'aur'
   | 'packagist'
   | 'nuget'
+  | 'crates'
 
 export const ECOSYSTEMS: Ecosystem[] = [
   'npm',
@@ -33,11 +34,12 @@ export const ECOSYSTEMS: Ecosystem[] = [
   'aur',
   'packagist',
   'nuget',
+  'crates',
 ]
 
 /** How usage errors name the accepted values, aliases included since they are target commands. */
 export const ECOSYSTEM_CHOICES =
-  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr, vscode, openvsx, aur, packagist (or composer), nuget'
+  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr, vscode, openvsx, aur, packagist (or composer), nuget, crates (or cargo)'
 
 export function ecosystemNamed(value: unknown): Ecosystem | undefined {
   const aliases: Record<string, Ecosystem> = {
@@ -45,6 +47,7 @@ export function ecosystemNamed(value: unknown): Ecosystem | undefined {
     docker: 'dockerhub',
     gem: 'rubygems',
     composer: 'packagist',
+    cargo: 'crates',
   }
   const name = typeof value === 'string' ? (aliases[value] ?? value) : value
   return (ECOSYSTEMS as unknown[]).includes(name) ? (name as Ecosystem) : undefined
@@ -175,6 +178,7 @@ export const HEADLINE_METRIC: Record<Ecosystem, string> = {
   aur: 'votes',
   packagist: 'downloadsWeek',
   nuget: 'downloadsTotal',
+  crates: 'downloadsWeek',
 }
 
 export function targetId(ecosystem: Ecosystem, name: string): string {

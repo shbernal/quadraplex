@@ -85,6 +85,7 @@ test('with nothing detected every row is empty and nothing is requested', async 
     'aur',
     'packagist',
     'nuget',
+    'crates',
   ])
   expect(suggestions.every((s) => s.value === null && s.status === 'none')).toBe(true)
   expect(requested).toEqual([])

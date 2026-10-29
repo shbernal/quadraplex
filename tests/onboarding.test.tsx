@@ -121,8 +121,7 @@ test('a reconfigure starts from the saved accounts and escape returns to the das
 })
 
 test('saving with nothing checked is refused', async () => {
-  // Tall enough that the refusal under the save line is on screen.
-  const app = mount('accounts', 90, 30)
+  const app = mount('accounts')
   await app.press('')
   await app.press(` jjj ${'j'.repeat(ROW_ORDER.length - 3)}\r`)
   expect(app.frame()).toContain('check at least one account')

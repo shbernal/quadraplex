@@ -47,6 +47,7 @@ export const DEFAULT_CONFIG: Config = {
     aur: '24h',
     packagist: '24h',
     nuget: '24h',
+    crates: '24h',
     curves: '30d',
     releases: '24h',
   },
@@ -66,6 +67,7 @@ export const DEFAULT_CONFIG: Config = {
     aur: '24h',
     packagist: '24h',
     nuget: '24h',
+    crates: '24h',
   },
 }
 

@@ -21,7 +21,7 @@ Monitor your development projects like an evil genius.
 
 ![qplex dashboard demo](docs/assets/demo.gif)
 
-quadraplex collects your npm, JSR, PyPI, Packagist, NuGet and AUR packages, Ruby gems, ghcr.io and Docker Hub images, browser extensions and GitHub repos into one local store.
+quadraplex collects your npm, JSR, PyPI, Packagist, NuGet and AUR packages, Ruby gems, Rust crates, ghcr.io and Docker Hub images, browser extensions and GitHub repos into one local store.
 A terminal dashboard shows each metric against a baseline, and a JSON surface answers agents from the same cache.
 
 Named after the Quadraplex T-3000, the computer that oversees the lab in _Dexter's Laboratory_.
@@ -44,6 +44,7 @@ It reports on the facility. It does not run it.
 | <img src="https://cdn.simpleicons.org/packagist" alt="" height="16"> Packagist                  | PHP packages                     | your Packagist vendor                  |
 | <img src="https://cdn.simpleicons.org/nuget" alt="" height="16"> NuGet                          | .NET packages                    | your NuGet username                    |
 | <img src="https://cdn.simpleicons.org/github/181717/white" alt="" height="16"> GitHub           | repos, releases and agent skills | your public repos                      |
+| <img src="https://cdn.simpleicons.org/rust" alt="" height="16"> crates.io                       | crates                           | your crates.io login (a GitHub login)  |
 | <img src="docs/assets/container.svg" alt="" height="16"> ghcr.io                                | images                           | your ghcr.io owner                     |
 | <img src="https://cdn.simpleicons.org/docker" alt="" height="16"> Docker Hub                    | images                           | your Docker Hub namespace              |
 | <img src="https://cdn.simpleicons.org/rubygems" alt="" height="16"> RubyGems                    | gems                             | your RubyGems handle                   |
@@ -116,7 +117,7 @@ npx skills add shbernal/quadraplex
 
 ```mermaid
 flowchart LR
-  R[npm · PyPI · GitHub · ghcr.io · Docker Hub · RubyGems · Packagist · NuGet · JSR · AUR · AMO · CWS · VS Marketplace · Open VSX] -->|qplex refresh| S[(snapshots.jsonl<br>append-only)]
+  R[npm · PyPI · GitHub · ghcr.io · Docker Hub · RubyGems · Packagist · NuGet · JSR · crates.io · AUR · AMO · CWS · VS Marketplace · Open VSX] -->|qplex refresh| S[(snapshots.jsonl<br>append-only)]
   S --> D[derived state]
   D --> T[dashboard]
   D --> J[status / list --json]

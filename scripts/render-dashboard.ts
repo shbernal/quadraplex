@@ -26,6 +26,7 @@ const canned: Suggestion[] = [
   { ecosystem: 'dockerhub', value: 'you', source: 'gh', status: 'found', count: 1 },
   { ecosystem: 'rubygems', value: 'you', source: 'gh', status: 'found', count: 2 },
   { ecosystem: 'jsr', value: 'you', source: 'gh', status: 'found', count: 2 },
+  { ecosystem: 'crates', value: 'you', source: 'gh', status: 'found', count: 2 },
   {
     ecosystem: 'amo',
     value: '20068285',

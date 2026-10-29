@@ -11,7 +11,7 @@ export function completionScript(shell: string | undefined): string {
   return `# bash completion for qplex and quadraplex
 _qplex() {
   local cur="\${COMP_WORDS[COMP_CWORD]}" prev="\${COMP_WORDS[COMP_CWORD-1]}" cmd="\${COMP_WORDS[1]}"
-  local ecosystems="npm pypi github gh ghcr dockerhub docker rubygems gem jsr packagist composer nuget amo cws clawhub vscode openvsx aur"
+  local ecosystems="npm pypi github gh ghcr dockerhub docker rubygems gem jsr crates cargo packagist composer nuget amo cws clawhub vscode openvsx aur"
   COMPREPLY=()
 
   if [[ "$prev" == --only ]]; then
@@ -22,7 +22,7 @@ _qplex() {
     local flags="--json --help --version"
     case "$cmd" in
       refresh) flags="--json --only --curves" ;;
-      init) flags="--suggest --json --only --handle --npm --pypi --github --ghcr --amo --cws --clawhub --dockerhub --rubygems --jsr --vscode --openvsx --aur --packagist --nuget" ;;
+      init) flags="--suggest --json --only --handle --npm --pypi --github --ghcr --amo --cws --clawhub --dockerhub --rubygems --jsr --vscode --openvsx --aur --packagist --nuget --crates" ;;
       status|list) flags="--json" ;;
       ${targets}) flags="--json --fresh" ;;
     esac
@@ -30,7 +30,7 @@ _qplex() {
     return
   fi
   if (( COMP_CWORD == 1 )); then
-    COMPREPLY=( $(compgen -W "init refresh status list npm pypi gh ghcr dockerhub docker rubygems gem jsr packagist composer nuget amo cws clawhub vscode openvsx aur completions help" -- "$cur") )
+    COMPREPLY=( $(compgen -W "init refresh status list npm pypi gh ghcr dockerhub docker rubygems gem jsr crates cargo packagist composer nuget amo cws clawhub vscode openvsx aur completions help" -- "$cur") )
     return
   fi
   (( COMP_CWORD == 2 )) || return
