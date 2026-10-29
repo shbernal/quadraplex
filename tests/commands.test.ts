@@ -39,10 +39,10 @@ function seed(...snapshots: Snapshot[]): void {
 }
 
 async function exitCode(argv: string[]): Promise<number | undefined> {
-  process.exitCode = undefined
+  process.exitCode = 0
   await main(argv)
   const code = process.exitCode as number | undefined
-  process.exitCode = undefined
+  process.exitCode = 0
   return code
 }
 
