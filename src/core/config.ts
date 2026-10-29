@@ -40,6 +40,7 @@ export const DEFAULT_CONFIG: Config = {
     cws: '24h',
     clawhub: '24h',
     dockerhub: '24h',
+    rubygems: '24h',
     curves: '30d',
     releases: '24h',
   },
@@ -52,6 +53,7 @@ export const DEFAULT_CONFIG: Config = {
     cws: '24h',
     clawhub: '24h',
     dockerhub: '24h',
+    rubygems: '24h',
   },
 }
 

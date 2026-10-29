@@ -78,6 +78,7 @@ test('with nothing detected every row is empty and nothing is requested', async 
     'cws',
     'clawhub',
     'dockerhub',
+    'rubygems',
   ])
   expect(suggestions.every((s) => s.value === null && s.status === 'none')).toBe(true)
   expect(requested).toEqual([])

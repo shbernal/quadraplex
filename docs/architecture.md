@@ -78,7 +78,8 @@ One shape across ecosystems, so no consumer special-cases.
 ```ts
 type Target = {
   id: string // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse", "amo:rebobinate"
-  ecosystem: 'npm' | 'pypi' | 'github' | 'ghcr' | 'amo' | 'cws' | 'clawhub' | 'dockerhub'
+  ecosystem:
+    'npm' | 'pypi' | 'github' | 'ghcr' | 'amo' | 'cws' | 'clawhub' | 'dockerhub' | 'rubygems'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -106,6 +107,7 @@ log and the clock.
 | github    | account repos     | stars, forks, the issue and PR split, releases, skills | 1 to 4 requests |
 | ghcr      | packages tab      | daily downloads, version, repo link                    | 1 page, 2 calls |
 | dockerhub | namespace listing | lifetime pulls, stars, version                         | 1 request       |
+| rubygems  | owner listing     | lifetime downloads, this version's, version, repo link | 0, listing pays |
 | amo       | author id search  | daily users, weekly downloads, rating, version         | 0, search pays  |
 | cws       | search, verified  | a bucketed user count, rating, version                 | 1 page          |
 | clawhub   | publisher roster  | lifetime installs, downloads, stars, version           | 1 request       |
@@ -236,6 +238,7 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | amo       | 24h | daily users is recomputed once a day         |
 | ghcr      | 24h | the page's chart is per day                  |
 | dockerhub | 24h | pulls are a lifetime count                   |
+| rubygems  | 24h | downloads are a lifetime count               |
 | cws       | 24h | the published user count is a daily bucket   |
 | clawhub   | 24h | installs are a slow, lifetime count          |
 | curves    | 30d | star history is immutable except at the tail |
@@ -276,7 +279,7 @@ a store that already has history is painful, so it is in from the start.
 ## The dashboard's panes
 
 The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, PyPI,
-GHCR and Docker Hub) and the extension stores (Chrome and Firefox). Each pane answers its own question, so each
+RubyGems, GHCR and Docker Hub) and the extension stores (Chrome and Firefox). Each pane answers its own question, so each
 pane has its own columns instead of one table with half its cells blank. A project is
 filed in every pane it has a target in, so a package with a repo shows its downloads in
 the registries pane and its stars in the GitHub pane. The project key ties those rows
@@ -344,6 +347,7 @@ those targets frozen in the log and reported stale forever.
     "github": "shbernal",
     "ghcr": "shbernal",
     "dockerhub": "shbernal",
+    "rubygems": "shbernal",
     "amo": "20068285",
     "cws": "shbernal", // the listing's "Offered by" name
     "clawhub": "shbernal",
@@ -361,6 +365,7 @@ those targets frozen in the log and reported stale forever.
     "github": "1h",
     "ghcr": "24h",
     "dockerhub": "24h",
+    "rubygems": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",
@@ -373,6 +378,7 @@ those targets frozen in the log and reported stale forever.
     "github": "24h",
     "ghcr": "24h",
     "dockerhub": "24h",
+    "rubygems": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",

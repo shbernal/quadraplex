@@ -46,6 +46,7 @@ export const ROW_ORDER: Ecosystem[] = [
   'dockerhub',
   'npm',
   'pypi',
+  'rubygems',
   'amo',
   'cws',
   'clawhub',
@@ -76,6 +77,12 @@ const meta = (e: Ecosystem): Meta =>
     },
     npm: { label: 'npm', icon: G.npm, color: C.npm, help: 'Your npm username.' },
     pypi: { label: 'PyPI', icon: G.pypi, color: C.pypi, help: 'Your PyPI username.' },
+    rubygems: {
+      label: 'RubyGems',
+      icon: G.rubygems,
+      color: C.rubygems,
+      help: 'Your RubyGems handle, the owner your gems list.',
+    },
     amo: {
       label: 'Firefox add-ons',
       icon: G.firefox,

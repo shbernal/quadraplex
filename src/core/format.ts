@@ -1,5 +1,6 @@
 export function compactNumber(value: number): string {
   const abs = Math.abs(value)
+  if (abs >= 1e9) return `${(value / 1e9).toFixed(abs >= 1e10 ? 0 : 1)}B`
   if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`
   if (abs >= 10_000) return `${(value / 1000).toFixed(0)}k`
   if (abs >= 1000) return `${(value / 1000).toFixed(1)}k`
@@ -49,6 +50,7 @@ const LABELS: Record<string, string> = {
   downloadsDay: 'downloads, day',
   downloadsMonth: 'downloads, month',
   downloadsTotal: 'downloads, all time',
+  downloadsVersion: 'downloads, version',
   downloadsWeek: 'downloads, week',
   lastPublish: 'last publish',
   lastPush: 'last push',

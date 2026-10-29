@@ -86,6 +86,7 @@ const PROBES: Record<Ecosystem, (account: string) => Promise<Found>> = {
   clawhub: (account) => discovered('clawhub', account),
   ghcr: (account) => discovered('ghcr', account),
   dockerhub: (account) => discovered('dockerhub', account),
+  rubygems: (account) => discovered('rubygems', account),
   github: async (account) => ({ count: await publicRepos(account) }),
   amo: async (account) => {
     const found = await findAccount(account)
@@ -145,6 +146,7 @@ const NOUN: Record<Ecosystem, string> = {
   cws: 'extension',
   clawhub: 'skill',
   dockerhub: 'image',
+  rubygems: 'gem',
 }
 
 /** What a probe found, in the words a suggestion row shows. */

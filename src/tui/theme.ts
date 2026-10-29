@@ -24,6 +24,7 @@ export const C = {
   pypi: named('yellow'),
   ghcr: named('magenta'),
   dockerhub: named('#1d63ed'),
+  rubygems: named('#e9573f'),
   chrome: named('green'),
   firefox: named('#ff7139'),
   clawhub: named('#e5484d'),
