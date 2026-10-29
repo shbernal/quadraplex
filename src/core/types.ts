@@ -14,6 +14,8 @@ export type Ecosystem =
   | 'vscode'
   | 'openvsx'
   | 'aur'
+  | 'packagist'
+  | 'nuget'
 
 export const ECOSYSTEMS: Ecosystem[] = [
   'npm',
@@ -29,21 +31,22 @@ export const ECOSYSTEMS: Ecosystem[] = [
   'vscode',
   'openvsx',
   'aur',
+  'packagist',
+  'nuget',
 ]
 
 /** How usage errors name the accepted values, aliases included since they are target commands. */
 export const ECOSYSTEM_CHOICES =
-  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr, vscode, openvsx, aur'
+  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr, vscode, openvsx, aur, packagist (or composer), nuget'
 
 export function ecosystemNamed(value: unknown): Ecosystem | undefined {
-  const name =
-    value === 'gh'
-      ? 'github'
-      : value === 'docker'
-        ? 'dockerhub'
-        : value === 'gem'
-          ? 'rubygems'
-          : value
+  const aliases: Record<string, Ecosystem> = {
+    gh: 'github',
+    docker: 'dockerhub',
+    gem: 'rubygems',
+    composer: 'packagist',
+  }
+  const name = typeof value === 'string' ? (aliases[value] ?? value) : value
   return (ECOSYSTEMS as unknown[]).includes(name) ? (name as Ecosystem) : undefined
 }
 
@@ -170,6 +173,8 @@ export const HEADLINE_METRIC: Record<Ecosystem, string> = {
   vscode: 'installs',
   openvsx: 'downloadsTotal',
   aur: 'votes',
+  packagist: 'downloadsWeek',
+  nuget: 'downloadsTotal',
 }
 
 export function targetId(ecosystem: Ecosystem, name: string): string {

@@ -15,6 +15,8 @@ Usage
   qplex dockerhub <ns/image>   one container image on Docker Hub, alias docker
   qplex rubygems <gem>         one RubyGems gem, alias gem
   qplex jsr <@scope/pkg>       one JSR package
+  qplex packagist <vendor/pkg> one PHP package on Packagist, alias composer
+  qplex nuget <id>             one .NET package on NuGet
   qplex amo <slug>             one Firefox add-on
   qplex cws <id>               one Chrome extension
   qplex clawhub <slug>         one ClawHub skill
@@ -31,6 +33,8 @@ Ecosystems
   dockerhub                    container images, Docker Hub
   rubygems, gem                Ruby gems, RubyGems
   jsr                          JSR packages, jsr.io
+  packagist, composer           PHP packages, Packagist
+  nuget                        .NET packages, NuGet
   amo                          Firefox add-ons, addons.mozilla.org
   cws                          Chrome extensions, Chrome Web Store
   clawhub                      agent skills published on ClawHub

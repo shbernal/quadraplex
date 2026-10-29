@@ -13,6 +13,8 @@ import { jsrSource } from './jsr.ts'
 import { vscodeSource } from './vscode.ts'
 import { openvsxSource } from './openvsx.ts'
 import { aurSource } from './aur.ts'
+import { packagistSource } from './packagist.ts'
+import { nugetSource } from './nuget.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
@@ -28,6 +30,8 @@ export const sources: Partial<Record<Ecosystem, Source>> = {
   vscode: vscodeSource,
   openvsx: openvsxSource,
   aur: aurSource,
+  packagist: packagistSource,
+  nuget: nugetSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {

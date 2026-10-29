@@ -82,6 +82,8 @@ function sourceIcon(e: Ecosystem): [string, string | undefined] {
     rubygems: [G.rubygems, C.rubygems],
     jsr: [G.jsr, C.jsr],
     aur: [G.aur, C.aur],
+    packagist: [G.packagist, C.packagist],
+    nuget: [G.nuget, C.nuget],
     cws: [G.chrome, C.chrome],
     amo: [G.firefox, C.firefox],
     clawhub: [G.clawhub, C.clawhub],
@@ -153,6 +155,8 @@ function elsewhere(project: Project, except: Ecosystem[]): Line {
     ['rubygems', G.rubygems, C.rubygems],
     ['jsr', G.jsr, C.jsr],
     ['aur', G.aur, C.aur],
+    ['packagist', G.packagist, C.packagist],
+    ['nuget', G.nuget, C.nuget],
     ['cws', G.chrome, C.chrome],
     ['amo', G.firefox, C.firefox],
     ['vscode', G.vscode, C.vscode],
@@ -337,13 +341,15 @@ function githubPane(
 // ---------------------------------------------------------------- registries
 
 /**
- * Docker Hub counts pulls for all time and nothing per day, so its row shows the total
- * marked Σ and moves by the pulls since the delta baseline, not by a change in the week.
+ * Docker Hub, RubyGems and NuGet count downloads for all time and nothing per day, so their
+ * rows show the total marked Σ and move by the downloads since the delta baseline, not by a
+ * change in the week.
  * The AUR counts no downloads at all, so its row shows lifetime votes the same way.
  */
 const LIFETIME: Partial<Record<Ecosystem, [key: string, mark: string]>> = {
   dockerhub: ['downloadsTotal', 'Σ'],
   rubygems: ['downloadsTotal', 'Σ'],
+  nuget: ['downloadsTotal', 'Σ'],
   aur: ['votes', '★'],
 }
 const lifetime = (t: Target) => LIFETIME[t.ecosystem]
@@ -822,6 +828,8 @@ export function buildBoard(now = Date.now()): Board {
     'github',
     'npm',
     'pypi',
+    'packagist',
+    'nuget',
     'ghcr',
     'dockerhub',
     'rubygems',

@@ -91,6 +91,8 @@ const PROBES: Record<Ecosystem, (account: string) => Promise<Found>> = {
   vscode: (account) => discovered('vscode', account),
   openvsx: (account) => discovered('openvsx', account),
   aur: (account) => discovered('aur', account),
+  packagist: (account) => discovered('packagist', account),
+  nuget: (account) => discovered('nuget', account),
   github: async (account) => ({ count: await publicRepos(account) }),
   amo: async (account) => {
     const found = await findAccount(account)
@@ -155,6 +157,8 @@ const NOUN: Record<Ecosystem, string> = {
   vscode: 'extension',
   openvsx: 'extension',
   aur: 'package',
+  packagist: 'package',
+  nuget: 'package',
 }
 
 /** What a probe found, in the words a suggestion row shows. */

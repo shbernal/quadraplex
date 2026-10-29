@@ -286,6 +286,7 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
   expect(parseOnly('pypi')).toEqual(['pypi'])
   expect(parseOnly('docker')).toEqual(['dockerhub'])
   expect(parseOnly('gem')).toEqual(['rubygems'])
+  expect(parseOnly('composer')).toEqual(['packagist'])
   expect(parseOnly(undefined)).toEqual([
     'npm',
     'pypi',
@@ -300,6 +301,8 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
     'vscode',
     'openvsx',
     'aur',
+    'packagist',
+    'nuget',
   ])
   expect(() => parseOnly('crates')).toThrow('--only takes one of')
   delete sources.cws

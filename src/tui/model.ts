@@ -20,10 +20,12 @@ import {
   targetId,
 } from '../core/types.ts'
 
-/** The dashboard's registries pane. All but Docker Hub, RubyGems and the AUR serve per-day downloads. */
+/** The dashboard's registries pane. All but Docker Hub, RubyGems, NuGet and the AUR serve per-day downloads. */
 export const REGISTRIES: Ecosystem[] = [
   'npm',
   'pypi',
+  'packagist',
+  'nuget',
   'ghcr',
   'dockerhub',
   'rubygems',
@@ -122,10 +124,13 @@ function displayName(targets: Target[], ownScope: string | undefined): string {
   return shortName(targets[0]!, ownScope).replace(/^@/, '')
 }
 
-/** A package without your own npm scope, an image without the owner every image shares. */
+/**
+ * A package without your own npm scope, an image or a Packagist package without the owner
+ * or vendor every one of them shares.
+ */
 export function shortName(target: Target, ownScope: string | undefined): string {
   const { name } = target
-  if (target.ecosystem === 'ghcr' || target.ecosystem === 'dockerhub')
+  if (['ghcr', 'dockerhub', 'packagist'].includes(target.ecosystem))
     return name.slice(name.indexOf('/') + 1)
   if (ownScope && name.startsWith(`@${ownScope}/`)) return name.slice(ownScope.length + 2)
   return name

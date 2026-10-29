@@ -1,11 +1,11 @@
 ---
 name: quadraplex
-description: Read portfolio state for the npm, JSR, PyPI and AUR packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
+description: Read portfolio state for the npm, JSR, PyPI, Packagist, NuGet and AUR packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
 ---
 
 # quadraplex
 
-A local store of everything the user publishes: npm, JSR, PyPI and AUR packages, Ruby gems,
+A local store of everything the user publishes: npm, JSR, PyPI, Packagist, NuGet and AUR packages, Ruby gems,
 container images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
 deltas measured against a time anchored baseline.
 
@@ -55,6 +55,8 @@ qplex ghcr shbernal/alcatraz --json
 qplex dockerhub shbernal/alcatraz --json
 qplex rubygems some-gem --json
 qplex jsr @shbernal/slug --json
+qplex packagist shbernal/some-lib --json
+qplex nuget shbernal.somelib --json
 qplex amo rebobinate --json
 qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 qplex clawhub rfc-lookup --json
@@ -149,6 +151,12 @@ only rate; `popularity` is the AUR's own score of recent votes, decaying daily, 
 fall with nothing happening. `version` is the upstream one without the pkgrel, and `null`
 on a VCS package (`-git` and the like), which builds from the branch head. `outOfDate` is
 `"no"` or the time the package was flagged.
+
+**A `packagist:` package has a per-day series and a lifetime `downloadsTotal`**, plus
+`favers` and `dependents`. Packagist's mirror of the repo's GitHub stars is left out; read
+the linked `gh:` target. An abandoned package has `deprecated: "yes"`. A `nuget:` package
+has only `downloadsTotal`, lifetime with no series, so its delta is the only rate, and
+`verified` says whether its ID prefix is reserved. Its name is the package ID lowercased.
 
 **`versions` on an `npm:` target splits `downloadsWeek` by version.** A version with a
 prerelease part (`0.3.0-next.4`) belongs to that prerelease track, so summing by track
