@@ -26,6 +26,7 @@ export const C = {
   dockerhub: named('#1d63ed'),
   rubygems: named('#e9573f'),
   jsr: named('#f7df1e'),
+  aur: named('#1793d1'),
   chrome: named('green'),
   firefox: named('#ff7139'),
   clawhub: named('#e5484d'),

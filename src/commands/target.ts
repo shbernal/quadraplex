@@ -47,6 +47,7 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   jsr: 'jsr',
   vscode: 'vscode',
   openvsx: 'openvsx',
+  aur: 'aur',
 }
 
 /**

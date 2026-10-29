@@ -1,12 +1,12 @@
 ---
 name: quadraplex
-description: Read portfolio state for the npm, JSR and PyPI packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
+description: Read portfolio state for the npm, JSR, PyPI and AUR packages, container images, browser extensions, agent skills and GitHub repos a user publishes, including download, user and star deltas. Use when asked what changed across someone's published projects, how a package, extension or repo is doing, or which of their projects moved recently.
 ---
 
 # quadraplex
 
-A local store of everything the user publishes: npm, JSR and PyPI packages, container
-Ruby gems, images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
+A local store of everything the user publishes: npm, JSR, PyPI and AUR packages, Ruby gems,
+container images on ghcr.io and Docker Hub, Firefox add-ons, Chrome extensions, ClawHub skills and GitHub repos with their releases and agent skills, with per-day download history where a source serves one, and
 deltas measured against a time anchored baseline.
 
 The store is already on disk. Your job is to read it, not to rebuild it.
@@ -60,6 +60,7 @@ qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 qplex clawhub rfc-lookup --json
 qplex vscode esbenp.prettier-vscode --json
 qplex openvsx redhat.java --json
+qplex aur och --json
 ```
 
 Add `--fresh` to refetch that one target when the answer has to be current:
@@ -142,6 +143,12 @@ reads and npm compatibility tarballs over a 90-day series.
 `installs` on the Marketplace and `downloadsTotal` on Open VSX are lifetime counts with no
 series, so their delta is the only rate, and the two are different units: never add them.
 The dashboard joins the two listings of one extension by name.
+
+**An `aur:` package counts no downloads.** `votes` is a lifetime count whose delta is the
+only rate; `popularity` is the AUR's own score of recent votes, decaying daily, so it can
+fall with nothing happening. `version` is the upstream one without the pkgrel, and `null`
+on a VCS package (`-git` and the like), which builds from the branch head. `outOfDate` is
+`"no"` or the time the package was flagged.
 
 **`versions` on an `npm:` target splits `downloadsWeek` by version.** A version with a
 prerelease part (`0.3.0-next.4`) belongs to that prerelease track, so summing by track

@@ -12,6 +12,7 @@ import { rubygemsSource } from './rubygems.ts'
 import { jsrSource } from './jsr.ts'
 import { vscodeSource } from './vscode.ts'
 import { openvsxSource } from './openvsx.ts'
+import { aurSource } from './aur.ts'
 
 export const sources: Partial<Record<Ecosystem, Source>> = {
   npm: npmSource,
@@ -26,6 +27,7 @@ export const sources: Partial<Record<Ecosystem, Source>> = {
   jsr: jsrSource,
   vscode: vscodeSource,
   openvsx: openvsxSource,
+  aur: aurSource,
 }
 
 export function sourceFor(ecosystem: Ecosystem): Source {

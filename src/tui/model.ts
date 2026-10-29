@@ -20,8 +20,16 @@ import {
   targetId,
 } from '../core/types.ts'
 
-/** The dashboard's registries pane. All but Docker Hub serve per-day downloads. */
-export const REGISTRIES: Ecosystem[] = ['npm', 'pypi', 'ghcr', 'dockerhub', 'rubygems', 'jsr']
+/** The dashboard's registries pane. All but Docker Hub, RubyGems and the AUR serve per-day downloads. */
+export const REGISTRIES: Ecosystem[] = [
+  'npm',
+  'pypi',
+  'ghcr',
+  'dockerhub',
+  'rubygems',
+  'jsr',
+  'aur',
+]
 
 /** A score and the number of ratings behind it, from whichever store has the most. */
 type Rating = { score: number; count: number; source: Ecosystem }

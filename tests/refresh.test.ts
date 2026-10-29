@@ -299,6 +299,7 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
     'jsr',
     'vscode',
     'openvsx',
+    'aur',
   ])
   expect(() => parseOnly('crates')).toThrow('--only takes one of')
   delete sources.cws

@@ -44,6 +44,7 @@ export const DEFAULT_CONFIG: Config = {
     jsr: '24h',
     vscode: '24h',
     openvsx: '24h',
+    aur: '24h',
     curves: '30d',
     releases: '24h',
   },
@@ -60,6 +61,7 @@ export const DEFAULT_CONFIG: Config = {
     jsr: '24h',
     vscode: '24h',
     openvsx: '24h',
+    aur: '24h',
   },
 }
 

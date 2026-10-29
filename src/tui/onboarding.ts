@@ -53,6 +53,7 @@ export const ROW_ORDER: Ecosystem[] = [
   'openvsx',
   'clawhub',
   'jsr',
+  'aur',
 ]
 
 type Meta = { label: string; icon: string; color: string | undefined; help: string }
@@ -91,6 +92,12 @@ const meta = (e: Ecosystem): Meta =>
       icon: G.rubygems,
       color: C.rubygems,
       help: 'Your RubyGems handle, the owner your gems list.',
+    },
+    aur: {
+      label: 'AUR',
+      icon: G.aur,
+      color: C.aur,
+      help: 'Your AUR username, as packages name their maintainer.',
     },
     amo: {
       label: 'Firefox add-ons',
