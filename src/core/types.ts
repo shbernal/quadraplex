@@ -10,6 +10,7 @@ export type Ecosystem =
   | 'clawhub'
   | 'dockerhub'
   | 'rubygems'
+  | 'jsr'
 
 export const ECOSYSTEMS: Ecosystem[] = [
   'npm',
@@ -21,11 +22,12 @@ export const ECOSYSTEMS: Ecosystem[] = [
   'clawhub',
   'dockerhub',
   'rubygems',
+  'jsr',
 ]
 
 /** How usage errors name the accepted values, aliases included since they are target commands. */
 export const ECOSYSTEM_CHOICES =
-  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem)'
+  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr'
 
 export function ecosystemNamed(value: unknown): Ecosystem | undefined {
   const name =
@@ -158,6 +160,7 @@ export const HEADLINE_METRIC: Record<Ecosystem, string> = {
   clawhub: 'installs',
   dockerhub: 'downloadsTotal',
   rubygems: 'downloadsTotal',
+  jsr: 'downloadsWeek',
 }
 
 export function targetId(ecosystem: Ecosystem, name: string): string {

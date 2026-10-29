@@ -17,10 +17,11 @@ import {
   type Skills,
   type Stargazer,
   type Target,
+  targetId,
 } from '../core/types.ts'
 
 /** The dashboard's registries pane. All but Docker Hub serve per-day downloads. */
-export const REGISTRIES: Ecosystem[] = ['npm', 'pypi', 'ghcr', 'dockerhub', 'rubygems']
+export const REGISTRIES: Ecosystem[] = ['npm', 'pypi', 'ghcr', 'dockerhub', 'rubygems', 'jsr']
 
 /** A score and the number of ratings behind it, from whichever store has the most. */
 type Rating = { score: number; count: number; source: Ecosystem }
@@ -167,6 +168,19 @@ function linkImages(targets: Target[], overrides: Config['links']): Target[] {
   })
 }
 
+/**
+ * A JSR package with no linked repo joins the npm package of the same name, the mirror a
+ * project publishing to both usually is. A `links` entry in config replaces the match.
+ */
+function linkMirrors(targets: Target[], overrides: Config['links']): Target[] {
+  const npm = new Set(targets.filter((t) => t.ecosystem === 'npm').map((t) => t.name))
+  return targets.map((t) => {
+    const match = targetId('npm', t.name)
+    if (t.ecosystem !== 'jsr' || overrides[t.id] || t.links.length || !npm.has(t.name)) return t
+    return { ...t, links: [match] }
+  })
+}
+
 export function buildProjects(): Project[] {
   const config = loadConfig()
   const state = loadState(config)
@@ -177,10 +191,13 @@ export function buildProjects(): Project[] {
     const reading = shown.has(t.ecosystem) ? repoSkills(t) : null
     if (reading) readings.set(t.id, reading)
   }
-  const visible = linkImages(
-    linkSkills(
-      state.targets.filter((t) => shown.has(t.ecosystem)),
-      readings,
+  const visible = linkMirrors(
+    linkImages(
+      linkSkills(
+        state.targets.filter((t) => shown.has(t.ecosystem)),
+        readings,
+        config.links,
+      ),
       config.links,
     ),
     config.links,

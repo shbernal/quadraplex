@@ -16,7 +16,7 @@ One publishing platform quadraplex reads, such as npm, PyPI, GitHub or the Chrom
 _Avoid_: platform, provider, store (for the service itself; "Chrome Web Store" and "extension stores" stay as names)
 
 **Registry**:
-A package or container registry ecosystem: npm, PyPI, RubyGems, GHCR or Docker Hub. The registries pane shows exactly these.
+A package or container registry ecosystem: npm, JSR, PyPI, RubyGems, GHCR or Docker Hub. The registries pane shows exactly these.
 _Avoid_: registry for any other ecosystem, such as GitHub, AMO, the Chrome Web Store or ClawHub
 
 **Account**:

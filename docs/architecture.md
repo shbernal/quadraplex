@@ -79,7 +79,16 @@ One shape across ecosystems, so no consumer special-cases.
 type Target = {
   id: string // "npm:@shbernal/gitpulse", "gh:shbernal/gitpulse", "amo:rebobinate"
   ecosystem:
-    'npm' | 'pypi' | 'github' | 'ghcr' | 'amo' | 'cws' | 'clawhub' | 'dockerhub' | 'rubygems'
+    | 'npm'
+    | 'pypi'
+    | 'github'
+    | 'ghcr'
+    | 'amo'
+    | 'cws'
+    | 'clawhub'
+    | 'dockerhub'
+    | 'rubygems'
+    | 'jsr'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -108,6 +117,7 @@ log and the clock.
 | ghcr      | packages tab      | daily downloads, version, repo link                    | 1 page, 2 calls |
 | dockerhub | namespace listing | lifetime pulls, stars, version                         | 1 request       |
 | rubygems  | owner listing     | lifetime downloads, this version's, version, repo link | 0, listing pays |
+| jsr       | scope listing     | daily downloads, version, score, runtimes, repo link   | 2 requests      |
 | amo       | author id search  | daily users, weekly downloads, rating, version         | 0, search pays  |
 | cws       | search, verified  | a bucketed user count, rating, version                 | 1 page          |
 | clawhub   | publisher roster  | lifetime installs, downloads, stars, version           | 1 request       |
@@ -139,6 +149,15 @@ behind. Observed by unpublishing `@shbernal/tiny-slug` on 2026-10-02.
 page sits behind a JavaScript challenge, so discovery calls `user_packages`, one of the
 methods PyPI kept when it deprecated XML-RPC. If it faults or is removed, discovery fails
 and refresh falls back to known targets plus `include`, as for any source.
+
+**JSR's account is a scope.** A JSR user is GitHub-linked but keyed by an opaque id the
+public API cannot look up by login, so discovery reads `/scopes/<scope>/packages`, which is
+the scope's roster and carries score, runtime compatibility, dependents and the GitHub repo.
+Each package then costs its downloads and its latest version, for the release date. The
+downloads endpoint answers 90 days of per-day counts split into registry reads and npm
+compatibility tarballs, leaving out empty days: the two are summed, the gaps are zeros and
+today's unfinished day is dropped. A package with no repo joins the npm package of the same
+name on the dashboard.
 
 **The Chrome Web Store is the one source with no API.** Its published API manages items
 and exposes no metrics, and the developer dashboard's numbers never leave the browser, so
@@ -239,6 +258,7 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | ghcr      | 24h | the page's chart is per day                  |
 | dockerhub | 24h | pulls are a lifetime count                   |
 | rubygems  | 24h | downloads are a lifetime count               |
+| jsr       | 24h | download data is daily                       |
 | cws       | 24h | the published user count is a daily bucket   |
 | clawhub   | 24h | installs are a slow, lifetime count          |
 | curves    | 30d | star history is immutable except at the tail |
@@ -278,7 +298,7 @@ a store that already has history is painful, so it is in from the start.
 
 ## The dashboard's panes
 
-The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, PyPI,
+The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, JSR, PyPI,
 RubyGems, GHCR and Docker Hub) and the extension stores (Chrome and Firefox). Each pane answers its own question, so each
 pane has its own columns instead of one table with half its cells blank. A project is
 filed in every pane it has a target in, so a package with a repo shows its downloads in
@@ -348,6 +368,7 @@ those targets frozen in the log and reported stale forever.
     "ghcr": "shbernal",
     "dockerhub": "shbernal",
     "rubygems": "shbernal",
+    "jsr": "shbernal", // a scope, without the @
     "amo": "20068285",
     "cws": "shbernal", // the listing's "Offered by" name
     "clawhub": "shbernal",
@@ -366,6 +387,7 @@ those targets frozen in the log and reported stale forever.
     "ghcr": "24h",
     "dockerhub": "24h",
     "rubygems": "24h",
+    "jsr": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",
@@ -379,6 +401,7 @@ those targets frozen in the log and reported stale forever.
     "ghcr": "24h",
     "dockerhub": "24h",
     "rubygems": "24h",
+    "jsr": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",

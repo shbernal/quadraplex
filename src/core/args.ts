@@ -18,6 +18,7 @@ const VALUE_FLAGS = new Set([
   'clawhub',
   'dockerhub',
   'rubygems',
+  'jsr',
 ])
 
 export function parseArgv(argv: string[]): Parsed {
