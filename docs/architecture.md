@@ -92,6 +92,8 @@ type Target = {
     | 'vscode'
     | 'openvsx'
     | 'aur'
+    | 'packagist'
+    | 'nuget'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -121,6 +123,8 @@ log and the clock.
 | dockerhub | namespace listing | lifetime pulls, stars, version                         | 1 request       |
 | rubygems  | owner listing     | lifetime downloads, this version's, version, repo link | 0, listing pays |
 | jsr       | scope listing     | daily downloads, version, score, runtimes, repo link   | 2 requests      |
+| packagist | vendor listing    | daily downloads, total, favers, dependents, version    | 2 requests      |
+| nuget     | owner search      | lifetime downloads, version, verified prefix           | 1 request       |
 | amo       | author id search  | daily users, weekly downloads, rating, version         | 0, search pays  |
 | cws       | search, verified  | a bucketed user count, rating, version                 | 1 page          |
 | clawhub   | publisher roster  | lifetime installs, downloads, stars, version           | 1 request       |
@@ -214,6 +218,20 @@ skills.sh counts what its CLI reports, so it only knows a skill somebody install
 repo whose skills it has never seen carries `skillInstalls: null`. The repo's tree is the
 roster and the index only supplies counts. [github.md](github.md) has the request cost.
 
+**Packagist mirrors GitHub, and quadraplex does not.** The package document repeats the
+repo's stars, forks and open issues, which the `gh:` target measures first hand, so a
+`packagist:` target keeps only Packagist's own numbers: `favers`, `dependents`, the
+lifetime total and a year of per-day downloads from the stats endpoint. Branches publish
+as `dev-…` versions and are not releases. An abandoned package reads as `deprecated`.
+
+**NuGet's only owner listing is search.** Discovery finds the search service in the v3
+service index and queries `owner:<account>`, whose hits carry the lifetime download count,
+the versions and the verified-prefix flag, so a discovered package costs one request, for
+the newest version's registration leaf and its publish time. Search hides unlisted
+packages, which is how NuGet withdraws one, so it is not a roster: a known package missing
+from it is looked up by id, and only a lookup that finds nothing, or finds it owned by
+someone else, retires it.
+
 **GHCR's downloads exist only on the package's GitHub page.** The REST packages API wants
 `read:packages`, which no default login has, and the registry serves no counts. The page
 is public and holds more than it shows: the exact total and publish time sit in the
@@ -274,6 +292,8 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | dockerhub | 24h | pulls are a lifetime count                   |
 | rubygems  | 24h | downloads are a lifetime count               |
 | jsr       | 24h | download data is daily                       |
+| packagist | 24h | download stats are daily                     |
+| nuget     | 24h | downloads are a lifetime count               |
 | cws       | 24h | the published user count is a daily bucket   |
 | clawhub   | 24h | installs are a slow, lifetime count          |
 | vscode    | 24h | installs are a lifetime count                |
@@ -305,8 +325,8 @@ carry forward as stale.
 ## Linking targets across ecosystems
 
 A published package and its repo are one project to a human. The link is derived from
-source metadata, `repository` on npm, `project_urls` on PyPI, `homepage` on AMO and the
-upstream `URL` on the AUR, stored
+source metadata, `repository` on npm and Packagist, `project_urls` on PyPI, `projectUrl` on
+NuGet, `homepage` on AMO and the upstream `URL` on the AUR, stored
 in `links`, and overridable in config. A Chrome Web Store listing publishes no repository
 field at all, so a `cws:` target offered by the account links to the account's repo named
 like its store slug, which is its title lowercased and hyphenated, and config overrides
@@ -319,7 +339,7 @@ a store that already has history is painful, so it is in from the start.
 ## The dashboard's panes
 
 The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, JSR, PyPI,
-RubyGems, GHCR, Docker Hub and the AUR) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
+RubyGems, Packagist, NuGet, GHCR, Docker Hub and the AUR) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
 pane has its own columns instead of one table with half its cells blank. A project is
 filed in every pane it has a target in, so a package with a repo shows its downloads in
 the registries pane and its stars in the GitHub pane. The project key ties those rows
@@ -389,6 +409,8 @@ those targets frozen in the log and reported stale forever.
     "dockerhub": "shbernal",
     "rubygems": "shbernal",
     "jsr": "shbernal", // a scope, without the @
+    "packagist": "shbernal", // the vendor before the slash
+    "nuget": "shbernal",
     "amo": "20068285",
     "cws": "shbernal", // the listing's "Offered by" name
     "vscode": "shbernal", // the Marketplace publisher id
@@ -411,6 +433,8 @@ those targets frozen in the log and reported stale forever.
     "dockerhub": "24h",
     "rubygems": "24h",
     "jsr": "24h",
+    "packagist": "24h",
+    "nuget": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",
@@ -428,6 +452,8 @@ those targets frozen in the log and reported stale forever.
     "dockerhub": "24h",
     "rubygems": "24h",
     "jsr": "24h",
+    "packagist": "24h",
+    "nuget": "24h",
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",

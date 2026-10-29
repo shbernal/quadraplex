@@ -48,6 +48,9 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   vscode: 'vscode',
   openvsx: 'openvsx',
   aur: 'aur',
+  packagist: 'packagist',
+  composer: 'packagist',
+  nuget: 'nuget',
 }
 
 /**

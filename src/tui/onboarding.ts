@@ -47,6 +47,8 @@ export const ROW_ORDER: Ecosystem[] = [
   'npm',
   'pypi',
   'rubygems',
+  'packagist',
+  'nuget',
   'amo',
   'cws',
   'vscode',
@@ -98,6 +100,18 @@ const meta = (e: Ecosystem): Meta =>
       icon: G.aur,
       color: C.aur,
       help: 'Your AUR username, as packages name their maintainer.',
+    },
+    packagist: {
+      label: 'Packagist',
+      icon: G.packagist,
+      color: C.packagist,
+      help: 'Your Packagist vendor, the part before the slash in your package names.',
+    },
+    nuget: {
+      label: 'NuGet',
+      icon: G.nuget,
+      color: C.nuget,
+      help: "Your NuGet username, as listed under a package's owners.",
     },
     amo: {
       label: 'Firefox add-ons',

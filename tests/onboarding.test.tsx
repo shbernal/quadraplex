@@ -74,11 +74,11 @@ test('an edited row is probed alone, and save writes the checked rows then refre
   const app = mount('accounts')
   await app.press('')
   // Down to AMO and replace its value, which moves on to the next row, then uncheck npm and save.
-  await app.press('jjjjjj\r\u007f\u007fme-on-amo\r')
+  await app.press(`${'j'.repeat(ROW_ORDER.indexOf('amo'))}\r\u007f\u007fme-on-amo\r`)
   expect(probes.at(-1)).toEqual({ only: 'amo', amo: 'me-on-amo' })
   expect(app.frame()).toMatch(/\[x\].*Firefox add-ons\s+42\s+Me · 2 add-ons/)
   expect(app.frame()).toMatch(/▌.*Chrome Web Store/)
-  await app.press('kkkk ')
+  await app.press(`${'k'.repeat(ROW_ORDER.indexOf('cws') - ROW_ORDER.indexOf('npm'))} `)
   expect(app.frame()).toMatch(/\[ \].*npm\s+me/)
   // From npm down past the last row to the save line.
   await app.press(`${'j'.repeat(ROW_ORDER.length - ROW_ORDER.indexOf('npm'))}\r`)
@@ -121,7 +121,8 @@ test('a reconfigure starts from the saved accounts and escape returns to the das
 })
 
 test('saving with nothing checked is refused', async () => {
-  const app = mount('accounts')
+  // Tall enough that the refusal under the save line is on screen.
+  const app = mount('accounts', 90, 30)
   await app.press('')
   await app.press(` jjj ${'j'.repeat(ROW_ORDER.length - 3)}\r`)
   expect(app.frame()).toContain('check at least one account')

@@ -46,6 +46,7 @@ run() {
     -e QPLEX_SMOKE_HANDLE -e QPLEX_SMOKE_NPM -e QPLEX_SMOKE_PYPI \
     -e QPLEX_SMOKE_AMO -e QPLEX_SMOKE_CWS -e QPLEX_SMOKE_RUBYGEMS -e QPLEX_SMOKE_JSR \
     -e QPLEX_SMOKE_VSCODE -e QPLEX_SMOKE_OPENVSX -e QPLEX_SMOKE_AUR \
+    -e QPLEX_SMOKE_PACKAGIST -e QPLEX_SMOKE_NUGET \
     "$IMAGE" bash -s
   echo "   ok"
 }
@@ -72,7 +73,7 @@ $(seeded git)"
 
 run scripted '
 flags=(--github "$H")
-for e in npm pypi amo cws rubygems jsr vscode openvsx aur; do
+for e in npm pypi amo cws rubygems jsr vscode openvsx aur packagist nuget; do
   var="QPLEX_SMOKE_${e^^}"
   if [[ -n "${!var:-}" ]]; then flags+=("--$e" "${!var}"); fi
 done

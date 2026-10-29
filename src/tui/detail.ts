@@ -126,6 +126,8 @@ function icon(ecosystem: Ecosystem): Line {
     rubygems: [seg(G.rubygems, C.rubygems)],
     jsr: [seg(G.jsr, C.jsr)],
     aur: [seg(G.aur, C.aur)],
+    packagist: [seg(G.packagist, C.packagist)],
+    nuget: [seg(G.nuget, C.nuget)],
     cws: [seg(G.chrome, C.chrome)],
     amo: [seg(G.firefox, C.firefox)],
     clawhub: [seg(G.clawhub, C.clawhub)],

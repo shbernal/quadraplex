@@ -45,6 +45,8 @@ export const DEFAULT_CONFIG: Config = {
     vscode: '24h',
     openvsx: '24h',
     aur: '24h',
+    packagist: '24h',
+    nuget: '24h',
     curves: '30d',
     releases: '24h',
   },
@@ -62,6 +64,8 @@ export const DEFAULT_CONFIG: Config = {
     vscode: '24h',
     openvsx: '24h',
     aur: '24h',
+    packagist: '24h',
+    nuget: '24h',
   },
 }
 

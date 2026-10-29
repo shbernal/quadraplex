@@ -37,7 +37,7 @@ and adds the display name as `label`. AMO no longer issues usernames, so a handl
 not know is matched against add-on authors' display names; a single match is suggested
 with `label` saying so, several or none is `none`.
 
-## `qplex refresh [--only npm|pypi|github|gh|ghcr|dockerhub|docker|rubygems|gem|jsr|amo|cws|clawhub|vscode|openvsx|aur] [--curves]`
+## `qplex refresh [--only npm|pypi|github|gh|ghcr|dockerhub|docker|rubygems|gem|jsr|packagist|composer|nuget|amo|cws|clawhub|vscode|openvsx|aur] [--curves]`
 
 The only command that walks the portfolio. Discovers targets, fetches each one, appends
 one snapshot line per target, then rewrites `state.json`. With no account and no `include`
@@ -81,7 +81,7 @@ here". An install with no config file gets a single hint to set up its accounts 
 
 One ecosystem, names plus a one-line state each, from cache. `--fresh` is a usage error.
 
-## `qplex npm <pkg> | pypi <pkg> | gh <owner/repo> | ghcr <owner/image> | dockerhub <namespace/image> | rubygems <gem> | jsr <@scope/pkg> | amo <slug> | cws <id> | clawhub <slug> | vscode <publisher.name> | openvsx <namespace.name> | aur <pkg> [--json] [--fresh]`
+## `qplex npm <pkg> | pypi <pkg> | gh <owner/repo> | ghcr <owner/image> | dockerhub <namespace/image> | rubygems <gem> | jsr <@scope/pkg> | packagist <vendor/pkg> | nuget <id> | amo <slug> | cws <id> | clawhub <slug> | vscode <publisher.name> | openvsx <namespace.name> | aur <pkg> [--json] [--fresh]`
 
 One target in full: every metric, every delta, the download or star series when there is
 one, and the GitHub issue and PR detail used by the dashboard's detail overlay. An npm

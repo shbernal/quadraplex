@@ -27,6 +27,8 @@ export const C = {
   rubygems: named('#e9573f'),
   jsr: named('#f7df1e'),
   aur: named('#1793d1'),
+  packagist: named('#f28d1a'),
+  nuget: named('#5a9bd5'),
   chrome: named('green'),
   firefox: named('#ff7139'),
   clawhub: named('#e5484d'),
