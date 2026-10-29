@@ -163,7 +163,7 @@ few hundred crates spends minutes of the run's deadline. A crates.io login is a 
 login: discovery resolves it to a user id and pages `/api/v1/crates?user_id=`, whose
 entries already carry lifetime downloads, the default version and `updated_at`, which
 only a publish moves, so it stands for `lastPublish`. Each crate then pays for its
-downloads table, 90 days per version and the rest folded together, which is summed per
+downloads table, 89 whole days per version and the rest folded together, which is summed per
 day with the day in progress dropped. A crate with every version yanked reads as
 deprecated.
 

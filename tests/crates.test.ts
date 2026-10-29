@@ -130,7 +130,7 @@ test('the series fills gaps with zeros, starts no earlier than the crate, and dr
     { date: daysAgo(2), downloads: 0 },
     { date: daysAgo(1), downloads: 3 },
   ])
-  expect(daily(null, '2015-01-01T00:00:00Z')).toHaveLength(90)
+  expect(daily(null, '2015-01-01T00:00:00Z')).toHaveLength(89)
 })
 
 test('a fully yanked crate reads as deprecated', async () => {

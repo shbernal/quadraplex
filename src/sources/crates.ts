@@ -14,8 +14,8 @@ const API = 'https://crates.io/api/v1'
 const PAGE = 100
 /** Discovery stops here even if `next_page` keeps answering, so a misbehaving cursor cannot loop. */
 const MAX_PAGES = 20
-/** crates.io's own downloads table keeps 90 days. */
-const WINDOW_DAYS = 90
+/** crates.io's downloads table keeps 90 days, today included, so 89 whole ones. */
+const WINDOW_DAYS = 89
 const DAY_MS = 86_400_000
 
 /**
