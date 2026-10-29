@@ -89,6 +89,8 @@ type Target = {
     | 'dockerhub'
     | 'rubygems'
     | 'jsr'
+    | 'vscode'
+    | 'openvsx'
   name: string
   url: string
   discovered: 'auto' | 'config'
@@ -121,6 +123,8 @@ log and the clock.
 | amo       | author id search  | daily users, weekly downloads, rating, version         | 0, search pays  |
 | cws       | search, verified  | a bucketed user count, rating, version                 | 1 page          |
 | clawhub   | publisher roster  | lifetime installs, downloads, stars, version           | 1 request       |
+| vscode    | publisher query   | lifetime installs, rating, version                     | 0, query pays   |
+| openvsx   | namespace roster  | lifetime downloads, rating, version                    | 1 request       |
 
 **npm's search index is not a roster.** A deprecated package is dropped from
 `maintainer:` search, which is silent in both directions: one deprecated before it was
@@ -193,6 +197,15 @@ once the account no longer publishes it. Its `installs` counts users whose CLI r
 install, the same unit as skills.sh, and ClawHub discards skills.sh's events, so the two
 stores' counts add up.
 
+**The editor extension stores count for all time.** The Visual Studio Marketplace serves
+its public gallery query, the one VS Code itself sends, filtered by publisher, and the
+answer carries every field a fetch needs, so one request discovers the portfolio and pays
+for it. `installs` is its lifetime count; its separate VSIX download count is left out.
+Open VSX lists a namespace's active extensions by name, so each costs its own request,
+and its `downloadsTotal` is lifetime too. Neither keeps a per-day history, so the rate is
+the delta. A target is named `<publisher>.<name>`, the id VS Code installs by. An unrated
+extension has a `rating` of `null`, never zero.
+
 **Agent skills ride on the repo target too.** A repo carries `skills`, the SKILL.md files
 `npx skills add` would install from it, and `skillInstalls`, their total on skills.sh.
 skills.sh counts what its CLI reports, so it only knows a skill somebody installed, and a
@@ -261,6 +274,8 @@ hardcoded at a call site. Defaults, overridable under `ttl` in `config.json`:
 | jsr       | 24h | download data is daily                       |
 | cws       | 24h | the published user count is a daily bucket   |
 | clawhub   | 24h | installs are a slow, lifetime count          |
+| vscode    | 24h | installs are a lifetime count                |
+| openvsx   | 24h | downloads are a lifetime count               |
 | curves    | 30d | star history is immutable except at the tail |
 | releases  | 24h | reread sooner when the repo was pushed since |
 
@@ -293,13 +308,14 @@ field at all, so a `cws:` target offered by the account links to the account's r
 like its store slug, which is its title lowercased and hyphenated, and config overrides
 that. A GHCR package links to the repo its page names. A ClawHub skill names no repo, so
 the dashboard joins it to the repo publishing a skill with the same slug, unless config
-links it. Only the TUI consumes it, but retrofitting an identity concept onto
+links it. An Open VSX extension joins the Marketplace extension of the same name, whatever
+the publisher and namespace are called. Only the TUI consumes it, but retrofitting an identity concept onto
 a store that already has history is painful, so it is in from the start.
 
 ## The dashboard's panes
 
 The dashboard is one bordered pane per group of ecosystems: GitHub, the registries (npm, JSR, PyPI,
-RubyGems, GHCR and Docker Hub) and the extension stores (Chrome and Firefox). Each pane answers its own question, so each
+RubyGems, GHCR and Docker Hub) and the extension stores (Chrome, Firefox, the Visual Studio Marketplace and Open VSX). Each pane answers its own question, so each
 pane has its own columns instead of one table with half its cells blank. A project is
 filed in every pane it has a target in, so a package with a repo shows its downloads in
 the registries pane and its stars in the GitHub pane. The project key ties those rows
@@ -371,6 +387,8 @@ those targets frozen in the log and reported stale forever.
     "jsr": "shbernal", // a scope, without the @
     "amo": "20068285",
     "cws": "shbernal", // the listing's "Offered by" name
+    "vscode": "shbernal", // the Marketplace publisher id
+    "openvsx": "shbernal", // the Open VSX namespace
     "clawhub": "shbernal",
   },
   "exclude": ["npm:some-experiment"],
@@ -391,6 +409,8 @@ those targets frozen in the log and reported stale forever.
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",
+    "vscode": "24h",
+    "openvsx": "24h",
     "curves": "30d",
     "releases": "24h",
   },
@@ -405,6 +425,8 @@ those targets frozen in the log and reported stale forever.
     "amo": "24h",
     "cws": "24h",
     "clawhub": "24h",
+    "vscode": "24h",
+    "openvsx": "24h",
   },
 }
 ```

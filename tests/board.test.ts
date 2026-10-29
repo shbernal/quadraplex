@@ -96,6 +96,7 @@ function framesFit() {
     { npm: 'me', github: 'me', amo: '1' },
     { github: 'me', cws: 'me' },
     { github: 'me', clawhub: 'me' },
+    { amo: '1', cws: 'me', vscode: 'me', openvsx: 'me' },
     { pypi: 'me' },
     {},
   ]) {
@@ -226,4 +227,27 @@ test('a second skill store gets a pane of its own, one row per skill across both
   const lines = frame(board, ui(null, 1), 120, 40).map(text)
   expect(lines.find((l) => l.includes('kit-lookup'))).toMatch(/5\s+3\s+new\s+8\s+0\.2\.0/)
   expect(lines.find((l) => l.includes('quiet'))).toContain('?')
+})
+
+test('editor extensions share the extensions pane, their lifetime counts marked Σ', () => {
+  configure({ github: 'me', amo: '1', vscode: 'me', openvsx: 'me' })
+  appendSnapshots([
+    snap('vscode:me.blocker', 'vscode', { installs: 2500, version: '2.1' }, ['gh:me/blocker']),
+    snap('openvsx:me.blocker', 'openvsx', { downloadsTotal: 310, version: '2.1' }),
+    snap('vscode:me.solo', 'vscode', { installs: 40, title: 'Solo' }),
+  ])
+  const board = buildBoard()
+  const pane = board.panes.find((p) => p.id === 'extensions')!
+  expect(pane.rows.map((r) => r.name)).toEqual(['blocker', 'Solo'])
+  expect(pane.rows[0]!.targets.map((t) => t.ecosystem).toSorted()).toEqual([
+    'amo',
+    'openvsx',
+    'vscode',
+  ])
+  const summary = text(pane.summary)
+  expect(summary).toContain(`${G.vscode} 2 Σ2.5k`)
+  expect(summary).toContain(`${G.openvsx} 1 Σ310`)
+  const lines = frame(board, ui(null, 1), 120, 40).map(text)
+  expect(lines.find((l) => l.includes('blocker'))).toContain('Σ2.5k')
+  expect(board.sources.map((s) => s.ecosystem)).toEqual(['github', 'amo', 'vscode', 'openvsx'])
 })

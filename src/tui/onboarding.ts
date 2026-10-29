@@ -49,6 +49,8 @@ export const ROW_ORDER: Ecosystem[] = [
   'rubygems',
   'amo',
   'cws',
+  'vscode',
+  'openvsx',
   'clawhub',
   'jsr',
 ]
@@ -101,6 +103,18 @@ const meta = (e: Ecosystem): Meta =>
       icon: G.chrome,
       color: C.chrome,
       help: 'The publisher name your listings show as "Offered by".',
+    },
+    vscode: {
+      label: 'VS Marketplace',
+      icon: G.vscode,
+      color: C.vscode,
+      help: 'Your Visual Studio Marketplace publisher id, the part before the dot in an extension id.',
+    },
+    openvsx: {
+      label: 'Open VSX',
+      icon: G.openvsx,
+      color: C.openvsx,
+      help: 'Your Open VSX namespace, the part before the dot in an extension id.',
     },
     clawhub: {
       label: 'ClawHub',

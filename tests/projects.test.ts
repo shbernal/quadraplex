@@ -108,3 +108,27 @@ test('a JSR package with no repo joins the npm package of its name', () => {
     ['jsr:@me/slug', 'npm:@me/slug'],
   ])
 })
+
+test('an Open VSX extension joins the Marketplace extension of its name, unless config links it', () => {
+  store(
+    [
+      snap('vscode:me.tidy', 'vscode', { installs: 40, title: 'Tidy' }, ['gh:me/tidy']),
+      snap('openvsx:ns.tidy', 'openvsx', { downloadsTotal: 9 }),
+      snap('gh:me/tidy', 'github', { stars: 1 }),
+      snap('openvsx:ns.lonely', 'openvsx', { downloadsTotal: 1, title: 'Lonely' }),
+      snap('vscode:me.pinned', 'vscode', { installs: 2 }),
+      snap('openvsx:ns.pinned', 'openvsx', { downloadsTotal: 2 }),
+    ],
+    {
+      accounts: { github: 'me', vscode: 'me', openvsx: 'ns' },
+      links: { 'openvsx:ns.pinned': [] },
+    },
+  )
+  const ids = buildProjects().map((p) => p.targets.map((t) => t.id).toSorted())
+  expect(ids).toEqual([
+    ['openvsx:ns.lonely'],
+    ['vscode:me.pinned'],
+    ['openvsx:ns.pinned'],
+    ['gh:me/tidy', 'openvsx:ns.tidy', 'vscode:me.tidy'],
+  ])
+})

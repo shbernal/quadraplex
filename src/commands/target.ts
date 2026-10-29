@@ -45,6 +45,8 @@ export const TARGET_COMMANDS: Record<string, Ecosystem> = {
   rubygems: 'rubygems',
   gem: 'rubygems',
   jsr: 'jsr',
+  vscode: 'vscode',
+  openvsx: 'openvsx',
 }
 
 /**

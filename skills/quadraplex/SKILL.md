@@ -58,6 +58,8 @@ qplex jsr @shbernal/slug --json
 qplex amo rebobinate --json
 qplex cws hjagmapcdgdffjbbedipfoocmkmhbjeh --json
 qplex clawhub rfc-lookup --json
+qplex vscode esbenp.prettier-vscode --json
+qplex openvsx redhat.java --json
 ```
 
 Add `--fresh` to refetch that one target when the answer has to be current:
@@ -135,6 +137,11 @@ yanked is retired.
 `score` is JSR's 0 to 100 package quality score, `runtimes` the comma-separated runtimes
 it declares (`browser,bun,deno,node,workerd`), `null` when none. Its downloads sum registry
 reads and npm compatibility tarballs over a 90-day series.
+
+**A `vscode:` or `openvsx:` target is one editor extension, named `publisher.name`.**
+`installs` on the Marketplace and `downloadsTotal` on Open VSX are lifetime counts with no
+series, so their delta is the only rate, and the two are different units: never add them.
+The dashboard joins the two listings of one extension by name.
 
 **`versions` on an `npm:` target splits `downloadsWeek` by version.** A version with a
 prerelease part (`0.3.0-next.4`) belongs to that prerelease track, so summing by track

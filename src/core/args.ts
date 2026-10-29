@@ -19,6 +19,8 @@ const VALUE_FLAGS = new Set([
   'dockerhub',
   'rubygems',
   'jsr',
+  'vscode',
+  'openvsx',
 ])
 
 export function parseArgv(argv: string[]): Parsed {

@@ -35,6 +35,8 @@ const canned: Suggestion[] = [
     label: 'you, by display name',
   },
   { ecosystem: 'cws', value: 'you', source: 'gh', status: 'found', count: 1 },
+  { ecosystem: 'vscode', value: 'you', source: 'gh', status: 'found', count: 2 },
+  { ecosystem: 'openvsx', value: 'you', source: 'gh', status: 'found', count: 2 },
   { ecosystem: 'clawhub', value: 'you', source: 'gh', status: 'found', count: 3 },
 ]
 const later = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), 30))

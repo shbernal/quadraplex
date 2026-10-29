@@ -128,6 +128,8 @@ function icon(ecosystem: Ecosystem): Line {
     cws: [seg(G.chrome, C.chrome)],
     amo: [seg(G.firefox, C.firefox)],
     clawhub: [seg(G.clawhub, C.clawhub)],
+    vscode: [seg(G.vscode, C.vscode)],
+    openvsx: [seg(G.openvsx, C.openvsx)],
   }
   return icons[ecosystem]
 }

@@ -47,6 +47,8 @@ It reports on the facility. It does not run it.
 | <img src="https://cdn.simpleicons.org/rubygems" alt="" height="16"> RubyGems                    | gems                             | your RubyGems handle                   |
 | <img src="https://cdn.simpleicons.org/firefoxbrowser" alt="" height="16"> Firefox Add-ons (AMO) | extensions                       | your numeric author id                 |
 | <img src="https://cdn.simpleicons.org/googlechrome" alt="" height="16"> Chrome Web Store        | extensions                       | the "Offered by" name on your listings |
+| VS Marketplace                                                                                  | VS Code extensions               | your Marketplace publisher id          |
+| Open VSX                                                                                        | VS Code extensions               | your Open VSX namespace                |
 | ClawHub                                                                                         | agent skills                     | your ClawHub publisher handle          |
 
 Anything discovery misses, like an unlisted Chrome extension, goes in the config's `include` list.
@@ -111,7 +113,7 @@ npx skills add shbernal/quadraplex
 
 ```mermaid
 flowchart LR
-  R[npm · PyPI · GitHub · ghcr.io · Docker Hub · RubyGems · JSR · AMO · CWS] -->|qplex refresh| S[(snapshots.jsonl<br>append-only)]
+  R[npm · PyPI · GitHub · ghcr.io · Docker Hub · RubyGems · JSR · AMO · CWS · VS Marketplace · Open VSX] -->|qplex refresh| S[(snapshots.jsonl<br>append-only)]
   S --> D[derived state]
   D --> T[dashboard]
   D --> J[status / list --json]

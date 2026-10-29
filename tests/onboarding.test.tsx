@@ -80,7 +80,8 @@ test('an edited row is probed alone, and save writes the checked rows then refre
   expect(app.frame()).toMatch(/▌.*Chrome Web Store/)
   await app.press('kkkk ')
   expect(app.frame()).toMatch(/\[ \].*npm\s+me/)
-  await app.press('jjjjjjj\r')
+  // From npm down past the last row to the save line.
+  await app.press(`${'j'.repeat(ROW_ORDER.length - ROW_ORDER.indexOf('npm'))}\r`)
   expect(config()).toEqual({ accounts: { github: 'me', amo: '42' } })
   await Bun.sleep(50)
   expect(refreshed).toEqual(['github', 'amo'])
@@ -94,7 +95,7 @@ test('the first refresh runs every source at once, each row done as its own fini
     new Promise<null>((resolve) => (release[only!] = () => resolve(null)))
   const app = mountTerminal(<Root start="accounts" onProbe={onProbe} onRefresh={held} />, 90, 24)
   await app.press('')
-  await app.press('jjjjjjjjjj\r')
+  await app.press(`${'j'.repeat(ROW_ORDER.length)}\r`)
   expect(Object.keys(release).toSorted()).toEqual(['github', 'npm'])
   release.npm!()
   await Bun.sleep(50)
@@ -122,7 +123,7 @@ test('a reconfigure starts from the saved accounts and escape returns to the das
 test('saving with nothing checked is refused', async () => {
   const app = mount('accounts')
   await app.press('')
-  await app.press(' jjj jjjjjjj\r')
+  await app.press(` jjj ${'j'.repeat(ROW_ORDER.length - 3)}\r`)
   expect(app.frame()).toContain('check at least one account')
   expect(existsSync(join(dir, 'config.json'))).toBe(false)
   app.unmount()

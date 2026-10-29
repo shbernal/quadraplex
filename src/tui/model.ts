@@ -181,6 +181,25 @@ function linkMirrors(targets: Target[], overrides: Config['links']): Target[] {
   })
 }
 
+/** An editor extension's name without the publisher or namespace before the dot. */
+const extensionName = (t: Target) => t.name.slice(t.name.indexOf('.') + 1)
+
+/**
+ * One VS Code extension is usually published to both the Marketplace and Open VSX, under
+ * a publisher and a namespace that need not match, so an Open VSX extension joins the
+ * Marketplace extension of the same name. A `links` entry in config replaces the match.
+ */
+function linkEditorExtensions(targets: Target[], overrides: Config['links']): Target[] {
+  const byName = new Map(
+    targets.filter((t) => t.ecosystem === 'vscode').map((t) => [extensionName(t), t.id]),
+  )
+  return targets.map((t) => {
+    const match = byName.get(extensionName(t))
+    if (t.ecosystem !== 'openvsx' || overrides[t.id] || !match || t.links.includes(match)) return t
+    return { ...t, links: [...t.links, match] }
+  })
+}
+
 export function buildProjects(): Project[] {
   const config = loadConfig()
   const state = loadState(config)
@@ -202,7 +221,7 @@ export function buildProjects(): Project[] {
     ),
     config.links,
   )
-  const projects = group(visible).map((targets): Project => {
+  const projects = group(linkEditorExtensions(visible, config.links)).map((targets): Project => {
     const ordered = targets.toSorted((a, b) => a.ecosystem.localeCompare(b.ecosystem))
     // Only the registries serve a per-day history, so a repo or a store listing adds
     // nothing to the trace.

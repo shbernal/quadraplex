@@ -11,6 +11,8 @@ export type Ecosystem =
   | 'dockerhub'
   | 'rubygems'
   | 'jsr'
+  | 'vscode'
+  | 'openvsx'
 
 export const ECOSYSTEMS: Ecosystem[] = [
   'npm',
@@ -23,11 +25,13 @@ export const ECOSYSTEMS: Ecosystem[] = [
   'dockerhub',
   'rubygems',
   'jsr',
+  'vscode',
+  'openvsx',
 ]
 
 /** How usage errors name the accepted values, aliases included since they are target commands. */
 export const ECOSYSTEM_CHOICES =
-  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr'
+  'npm, pypi, github (or gh), ghcr, amo, cws, clawhub, dockerhub (or docker), rubygems (or gem), jsr, vscode, openvsx'
 
 export function ecosystemNamed(value: unknown): Ecosystem | undefined {
   const name =
@@ -161,6 +165,8 @@ export const HEADLINE_METRIC: Record<Ecosystem, string> = {
   dockerhub: 'downloadsTotal',
   rubygems: 'downloadsTotal',
   jsr: 'downloadsWeek',
+  vscode: 'installs',
+  openvsx: 'downloadsTotal',
 }
 
 export function targetId(ecosystem: Ecosystem, name: string): string {
