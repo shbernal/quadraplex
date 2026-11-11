@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { useApp, useInput, useStdout, type Key } from 'ink'
+import { useApp, useInput, useWindowSize, type Key } from 'ink'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { Ecosystem, Target } from '../core/types.ts'
 import { buildBoard, DEFAULT_VIEW, SORTS, viewBoard, type PaneId, type View } from './board.ts'
@@ -28,9 +28,7 @@ export function App({
   notice?: string | null
 }) {
   const { exit } = useApp()
-  const { stdout } = useStdout()
-  const cols = stdout.columns ?? 80
-  const rows = stdout.rows ?? 24
+  const { columns: cols, rows } = useWindowSize()
   const [stamp, setStamp] = useState(0)
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- stamp is the reload trigger
   const built = useMemo(() => buildBoard(), [stamp])

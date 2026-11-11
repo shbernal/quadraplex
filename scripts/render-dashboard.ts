@@ -54,7 +54,7 @@ const frames: string[] = []
 const stdout = Object.assign(new EventEmitter(), {
   columns,
   rows,
-  write: (chunk: string) => frames.push(chunk),
+  write: (chunk: string) => chunk && frames.push(chunk),
 }) as unknown as NodeJS.WriteStream
 
 const input = new PassThrough()
