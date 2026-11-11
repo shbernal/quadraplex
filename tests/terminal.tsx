@@ -9,7 +9,12 @@ export function mountTerminal(element: ReactElement, columns: number, rows: numb
   const stdout = Object.assign(new EventEmitter(), {
     columns,
     rows,
-    write: (chunk: string) => frames.push(chunk),
+    // Ink resolves waitUntilExit from the callback of a final empty write.
+    write: (chunk: string, done?: () => void) => {
+      if (chunk) frames.push(chunk)
+      done?.()
+      return true
+    },
   }) as unknown as NodeJS.WriteStream
   const input = new PassThrough()
   const stdin = Object.assign(input, {

@@ -1,4 +1,4 @@
-import { useApp, useInput, useStdout } from 'ink'
+import { useApp, useInput, useWindowSize } from 'ink'
 import { useEffect, useRef, useState } from 'react'
 import type { Suggestion } from '../commands/init.ts'
 import { configured, configuredEcosystems, loadConfig, saveAccounts } from '../core/config.ts'
@@ -63,9 +63,7 @@ function Onboarding({
   onSaved: (notice: string | null) => void
   onCancel: () => void
 }) {
-  const { stdout } = useStdout()
-  const cols = stdout.columns ?? 80
-  const rows = stdout.rows ?? 24
+  const { columns: cols, rows } = useWindowSize()
   const [accounts, setAccounts] = useState(initialRows)
   const [cursor, setCursor] = useState(0)
   const [editing, setEditing] = useState<string | null>(null)
