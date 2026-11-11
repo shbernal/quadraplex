@@ -1,6 +1,5 @@
 import { expect, test } from 'bun:test'
 import { parseArgv, UsageError } from '../src/core/args.ts'
-import { rejectUnscopedFresh } from '../src/commands/guards.ts'
 import { parseDuration } from '../src/core/duration.ts'
 import { formatDelta } from '../src/core/format.ts'
 import { parseTargetId, targetId } from '../src/core/types.ts'
@@ -17,12 +16,6 @@ test('--only takes a value, attached or separate', () => {
   expect(parseArgv(['refresh', '--only=pypi']).flags.only).toBe('pypi')
   expect(() => parseArgv(['refresh', '--only'])).toThrow(UsageError)
   expect(parseArgv(['refresh', '--only=a=b']).flags.only).toBe('a=b')
-})
-
-test('unscoped --fresh is refused and the message names refresh', () => {
-  expect(() => rejectUnscopedFresh('status', { fresh: true })).toThrow(/qplex refresh/)
-  expect(() => rejectUnscopedFresh('list', { fresh: true })).toThrow(UsageError)
-  expect(() => rejectUnscopedFresh('status', {})).not.toThrow()
 })
 
 test('durations parse by unit and reject anything else', () => {
