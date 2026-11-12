@@ -287,28 +287,12 @@ test('--only accepts an ecosystem or an alias, and defaults to every registered 
   expect(parseOnly('docker')).toEqual(['dockerhub'])
   expect(parseOnly('gem')).toEqual(['rubygems'])
   expect(parseOnly('composer')).toEqual(['packagist'])
-  expect(parseOnly(undefined)).toEqual([
-    'npm',
-    'pypi',
-    'github',
-    'ghcr',
-    'amo',
-    'cws',
-    'clawhub',
-    'dockerhub',
-    'rubygems',
-    'jsr',
-    'vscode',
-    'openvsx',
-    'aur',
-    'packagist',
-    'nuget',
-    'crates',
-  ])
+  expect(new Set<string>(parseOnly(undefined))).toEqual(new Set(Object.keys(sources)))
   expect(parseOnly('cargo')).toEqual(['crates'])
   expect(() => parseOnly('nope')).toThrow('--only takes one of')
   delete sources.cws
   expect(() => parseOnly('cws')).toThrow(UsageError)
+  expect(parseOnly(undefined)).not.toContain('cws')
 })
 
 test('past the run deadline no target starts and known ones carry forward as failed', async () => {
