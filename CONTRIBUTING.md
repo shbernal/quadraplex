@@ -60,6 +60,24 @@ There are no git hooks. CI runs every check above on each pull request, plus `bu
 on the documents a user reads, and rejects AI attribution lines in commit messages: the
 disclosure belongs in the pull request body, never in a commit.
 
+## Releasing
+
+npm ships `dist/cli.js`, a single bundle for node with ink and react inside it, so the
+package has no runtime dependencies and needs no bun. To release:
+
+1. Move the `Unreleased` entries in [CHANGELOG.md](CHANGELOG.md) under the new version and
+   set the same version in `package.json`, in a pull request.
+2. Run the smoke test above against that commit.
+3. After the merge, tag it and push the tag:
+
+   ```sh
+   git tag v0.1.0 && git push origin v0.1.0
+   ```
+
+`.github/workflows/publish.yml` then checks the tag against `package.json`, runs the tests,
+builds, publishes to npm through trusted publishing with provenance, and creates the GitHub
+release. There is no npm token anywhere: npm trusts that workflow by its file name.
+
 ## Layout
 
 ```

@@ -5,7 +5,14 @@ export default defineConfig({
     {
       id: 'no-em-dash',
       chars: ['—'],
-      include: ['README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'docs/**/*.md', 'skills/**/*.md'],
+      include: [
+        'README.md',
+        'CONTRIBUTING.md',
+        'CHANGELOG.md',
+        'AGENTS.md',
+        'docs/**/*.md',
+        'skills/**/*.md',
+      ],
     },
   ],
 })
