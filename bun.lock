@@ -4,18 +4,16 @@
   "workspaces": {
     "": {
       "name": "quadraplex",
-      "dependencies": {
-        "ink": "^8.0.0",
-        "react": "^19.3.1",
-      },
       "devDependencies": {
         "@types/bun": "^1.4.4",
         "@types/react": "^19.3.0",
         "charcheck": "^0.4.0",
+        "ink": "^8.0.0",
         "knip": "^6.45.1",
         "oxfmt": "^0.78.0",
         "oxlint": "^1.93.0",
         "oxlint-tsgolint": "^7.0.2006",
+        "react": "^19.3.1",
         "typescript": "^7.0.2",
       },
     },
